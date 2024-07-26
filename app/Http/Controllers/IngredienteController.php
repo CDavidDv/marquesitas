@@ -82,17 +82,46 @@ class IngredienteController extends Controller
 
     public function editarIngrediente(Request $request, $id)
     {
-        $validated = $request->validate([
-            'nombre' => 'required|string|max:255',
-            'cantidad' => 'required|integer|min:0',
-            'precio' => 'required|numeric|min:0',
-        ]);
-
+        $user = auth()->user();
         $ingrediente = Ingrediente::findOrFail($id);
-        $ingrediente->precio = $request->input('precio');
-        $ingrediente->update($validated);
+
+        if ($user->sucursal_id == 0) {
+            $validated = $request->validate([
+                'nombre' => 'required|string|max:255',
+                'precio' => 'required|numeric|min:0',
+                'cantidad' => 'required|integer|min:0',
+            ]);
+            $ingrediente->update($validated);
+        } else {
+            $validated = $request->validate([
+                'cantidad' => 'required|integer|min:0',
+            ]);
+            $ingrediente->update(['cantidad' => $validated['cantidad']]);
+        }
 
         return redirect()->back()->with('success', 'Ingrediente actualizado con éxito');
+    }
+
+    public function editarBebida(Request $request, $id)
+    {
+        $user = auth()->user();
+        $bebida = BebidasInventario::findOrFail($id);
+
+        if ($user->sucursal_id == 0) {
+            $validated = $request->validate([
+                'nombre' => 'required|string|max:255',
+                'precio' => 'required|numeric|min:0',
+                'cantidad' => 'required|integer|min:0',
+            ]);
+            $bebida->update($validated);
+        } else {
+            $validated = $request->validate([
+                'cantidad' => 'required|integer|min:0',
+            ]);
+            $bebida->update(['cantidad' => $validated['cantidad']]);
+        }
+
+        return redirect()->back()->with('success', 'Bebida actualizada con éxito');
     }
 
     public function eliminarIngrediente($id)
@@ -120,19 +149,7 @@ class IngredienteController extends Controller
         return redirect()->back()->with('success', 'Bebida agregado con éxito');
     }
 
-    public function editarBebida(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'nombre' => 'required|string|max:255',
-        ]);
-
-        $bebida = BebidasInventario::findOrFail($id);
-        $bebida->update([
-            'nombre' => $validated['nombre'],
-        ]);
-
-        return redirect()->back()->with('success', 'Bebida editado con éxito');
-    }
+    
 
     public function eliminarBebida($id)
     {

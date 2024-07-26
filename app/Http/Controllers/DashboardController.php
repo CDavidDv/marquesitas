@@ -87,12 +87,13 @@ class DashboardController extends Controller
         $ingredientesInventario = $ingredientes->map(function($ingrediente) use ($inventario) {
             $inventarioIngrediente = $inventario->where('ingrediente_id', $ingrediente->id)->first();
             $cantidad = $inventarioIngrediente->cantidad ?? 0;
-            $precio = $inventarioIngrediente->precio ?? 0; // Asegúrate de que el campo 'precio' esté en la tabla de inventario
+            $precioInventario = $inventarioIngrediente->precio ?? 0;
             return [
                 'id' => $ingrediente->id,
                 'nombre' => $ingrediente->nombre,
                 'cantidad' => $cantidad,
-                'precio' => $precio
+                'precio' => $precioInventario,
+                'precio_original' => $ingrediente->precio // Precio original del ingrediente
             ];
         });
 
@@ -100,19 +101,22 @@ class DashboardController extends Controller
         $bebidasInventario = $bebidas->map(function($bebida) use ($inventario) {
             $inventarioBebida = $inventario->where('bebida_id', $bebida->id)->first();
             $cantidad = $inventarioBebida->cantidad ?? 0;
-            $precio = $inventarioBebida->precio ?? 0; // Asegúrate de que el campo 'precio' esté en la tabla de inventario
+            $precioInventario = $inventarioBebida->precio ?? 0;
             return [
                 'id' => $bebida->id,
                 'nombre' => $bebida->nombre,
                 'cantidad' => $cantidad,
-                'precio' => $precio
+                'precio' => $precioInventario,
+                'precio_original' => $bebida->precio // Precio original de la bebida
             ];
         });
 
         return Inertia::render('Inventario', [
-            'ingredientes' => $ingredientesInventario,
-            'bebidas' => $bebidasInventario,
-            'sucursal' => $sucursalId
+            'ingredientesInventario' => $ingredientesInventario,
+            'bebidasInventario' => $bebidasInventario,
+            'sucursal' => $sucursalId,
+            'ingredientes' => $ingredientes,
+            'bebidas' => $bebidas   
         ]);
     }
 

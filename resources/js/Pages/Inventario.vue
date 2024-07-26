@@ -7,12 +7,34 @@ const { props } = usePage();
 
 const ingredientes = ref(props.ingredientes || []);
 const bebidas = ref(props.bebidas || []);
+const ingredientesInventario = ref(props.ingredientesInventario || []);
+const bebidasInventario = ref(props.bebidasInventario || []);
 const sucursal = ref(props.sucursal || '');
 
 const form = reactive({
   sucursal_id: sucursal.value,
-  ingredientes: ingredientes.value.map(i => ({ id: i.id, nombre: i.nombre, cantidad: i.cantidad || 0, precio: i.precio || 0 })),
-  bebidas: bebidas.value.map(b => ({ id: b.id, nombre: b.nombre, cantidad: b.cantidad || 0 }))
+  ingredientes: ingredientes.value.map(i => ({
+    id: i.id,
+    nombre: i.nombre,
+    cantidad: (ingredientesInventario.value.find(inv => inv.id === i.id)?.cantidad) || 0,
+    precio: i.precio || 0
+  })),
+  bebidas: bebidas.value.map(b => ({
+    id: b.id,
+    nombre: b.nombre,
+    cantidad: (bebidasInventario.value.find(inv => inv.id === b.id)?.cantidad) || 0
+  })),
+  ingredientesInventario: ingredientesInventario.value.map(i => ({
+    id: i.id,
+    nombre: i.nombre,
+    cantidad: i.cantidad || 0,
+    precio: i.precio || 0
+  })),
+  bebidasInventario: bebidasInventario.value.map(b => ({
+    id: b.id,
+    nombre: b.nombre,
+    cantidad: b.cantidad || 0
+  }))
 });
 
 const updateCantidad = (id, value, type) => {
@@ -168,7 +190,7 @@ const eliminarBebida = (id) => {
                         <span class=" font-light text-sm lg:text-base">{{ ingrediente.nombre }}:</span>
                         <div v-if="$page.props.auth.user.sucursal_id == 0" class="flex flex-col gap-1">
                           <span @click="editarIngrediente(ingrediente.id)"
-                            class=" text-center text-xs p-1 bg-yellow-400 text-gray-900 font-bold rounded-lg cursor-pointer">Editar</span>
+                            class=" text-center text-xs p-1 bg-yellow-400 text-gray-700 font-bold rounded-lg cursor-pointer">Actualizar</span>
                           <span @click="eliminarIngrediente(ingrediente.id)"
                             class="text-center text-xs p-1 bg-red-600 text-white font-bold rounded-lg cursor-pointer">Eliminar</span>
                         </div>
@@ -211,7 +233,7 @@ const eliminarBebida = (id) => {
                         <span class="font-medium">{{ bebida.nombre }}:</span>
                         <div v-if="$page.props.auth.user.sucursal_id == 0" class="flex flex-col gap-1">
                           <span @click="editarBebida(bebida.id)"
-                            class=" text-center text-xs p-1 bg-yellow-400 text-gray-900 font-bold rounded-lg cursor-pointer">Editar</span>
+                            class=" text-center text-xs p-1 bg-yellow-400 text-gray-900 font-bold rounded-lg cursor-pointer">Actualizar</span>
                           <span @click="eliminarBebida(bebida.id)"
                             class="text-center text-xs p-1 bg-red-600 text-white font-bold rounded-lg cursor-pointer">Eliminar</span>
                         </div>
@@ -239,7 +261,7 @@ const eliminarBebida = (id) => {
                 </div>
               </div>
 
-              <div class="w-full flex justify-end">
+              <div v-if="$page.props.auth.user.sucursal_id > 0" class="w-full flex justify-end">
                 <button type="submit" class="py-2 px-3 rounded-lg bg-orange-500 text-white font-bold">Actualizar
                   Inventario</button>
               </div>
