@@ -16,7 +16,10 @@ Route::middleware([
     'verified',
 ])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
+
     Route::get('/corte', [DashboardController::class, 'corte'])->name('corte');
+    Route::get('/datos-filtrados', [OrderController::class, 'datosfiltrados']);
+
     Route::get('/inventario', [DashboardController::class, 'inventario'])->name('inventario');
     Route::get('/orders', [OrderController::class, 'index']);
     Route::post('/orders', [OrderController::class, 'store']);

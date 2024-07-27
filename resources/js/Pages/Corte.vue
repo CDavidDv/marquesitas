@@ -1,75 +1,207 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { ref, computed } from 'vue';
+import { usePage, useForm, router } from '@inertiajs/vue3';
 
-import { defineComponent } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+const { props } = usePage();
 
-defineProps({
-    
-    total: {
-        type: Number,
-        required: true
-    },
-    orders: {
-        type: Object,
-        required: true
-    },
-    numeroDeOrdenes: {
-        type: Number,
-        required: true
-    },
-    hoy: {
-        type: String,
-        required: false
-    },
-    sucursal: {
-        type: Number,
-        required: false
-    },
-})
+const totalEfectivo = ref(props.totalEfectivo || 0);
+const totalTarjeta = ref(props.totalTarjeta || 0);
+const totalTransferencia = ref(props.totalTransferencia || 0);
+const totalBruto = ref(props.totalBruto || 0);
+const orders = ref(props.orders || []);
+const numeroDeOrdenes = ref(props.numeroDeOrdenes || 0);
+const hoy = ref(props.hoy || '');
+const sucursal = ref(props.sucursal || 0);
+const error = ref(null);
+const filtro = ref(null);
+const selectedFilter = ref(props.selectedFilter || 'day');
+const selectedDate = ref(props.selectedDate || '');
+const selectedWeek = ref(props.selectedWeek || '');
+const selectedMonth = ref(props.selectedMonth || '');
+
+const ordersBySucursal = computed(() => {
+    if (sucursal.value > 0) return [];
+
+    const grouped = orders.value.reduce((acc, order) => {
+        if (!acc[order.sucursal_id]) {
+            acc[order.sucursal_id] = {
+                id: order.sucursal_id,
+                totalEfectivo: 0,
+                totalTarjeta: 0,
+                totalTransferencia: 0,
+                totalBruto: 0,
+                numeroDeOrdenes: 0,
+                orders: []
+            };
+        }
+        const totalValue = parseFloat(order.total);
+        if (!isNaN(totalValue)) {
+            acc[order.sucursal_id].totalBruto += totalValue;
+            acc[order.sucursal_id].numeroDeOrdenes += 1;
+            acc[order.sucursal_id].orders.push(order);
+            
+            switch (order.metodo) {
+                case 'Efectivo':
+                    acc[order.sucursal_id].totalEfectivo += totalValue;
+                    break;
+                case 'Tarjeta':
+                    acc[order.sucursal_id].totalTarjeta += totalValue;
+                    break;
+                case 'Transferencia':
+                    acc[order.sucursal_id].totalTransferencia += totalValue;
+                    break;
+            }
+        }
+        return acc;
+    }, {});
+
+    const sortedOrders = Object.values(grouped).map(sucursal => {
+        sucursal.orders.sort((a, b) => a.id - b.id); // Ordenar de menor a mayor por id
+        return sucursal;
+    });
+
+    return sortedOrders;
+});
+
+const form = useForm({
+    filter: selectedFilter.value,
+    value: selectedMonth.value || selectedWeek.value || selectedDate.value
+});
+
+const fetchFilteredData = () => {
+    if (!selectedDate.value && !selectedWeek.value && !selectedMonth.value) {
+        error.value = 'Debe seleccionar una fecha.';
+        return;
+    }
+
+    let value = '';
+    switch (selectedFilter.value) {
+        case 'day':
+            value = selectedDate.value;
+            break;
+        case 'week':
+            value = selectedWeek.value;
+            break;
+        case 'month':
+            value = selectedMonth.value;
+            break;
+    }
+
+    // Actualiza los valores del formulario
+    form.filter = selectedFilter.value;
+    form.value = value;
+
+    // Realiza la solicitud para obtener datos filtrados
+    form.get('/datos-filtrados', {
+        onSuccess: (page) => {
+            totalEfectivo.value = page.props.totalEfectivo;
+            totalTarjeta.value = page.props.totalTarjeta;
+            totalTransferencia.value = page.props.totalTransferencia;
+            totalBruto.value = page.props.totalBruto;
+            orders.value = page.props.orders;
+            numeroDeOrdenes.value = page.props.numeroDeOrdenes;
+            error.value = 'Debe seleccionar una fecha.';
+            filtro.value = 'Filtrado por';
+        },
+        onError: (error) => {
+            console.error('Error al obtener datos filtrados:', error);
+        }
+    });
+};
+
+const resetFilters = () => {
+    selectedFilter.value = 'day'; 
+    selectedDate.value = '';
+    selectedWeek.value = '';
+    selectedMonth.value = '';
+    router.get('/corte')
+};
 </script>
+
+
 
 <template>
     <AppLayout title="Tablero">
         <template #header>
             <div class="flex justify-between flex-col md:flex-row">
                 <div>
-                    <h1 class="text-xl font-bold">Corte de caja de sucursal {{ sucursal }}</h1>
-                    <p>Corte del dia {{ hoy.split('T')[0].split('-')[2] +"/"+ hoy.split('T')[0].split('-')[1] +"/"+ hoy.split('T')[0].split('-')[0] }}</p>
+                    <div v-if="$page.props.auth.user.sucursal_id > 0">
+                        <h1 class="text-xl font-bold">Corte de caja de sucursal {{ sucursal }}</h1>
+                        <p>Corte del día {{ hoy.split('T')[0].split('-')[2] + "/" + hoy.split('T')[0].split('-')[1] + "/" + hoy.split('T')[0].split('-')[0] }}</p>
+                    </div>
+                    <h1 v-else class="lg:text-2xl sm:text-xl font-bold">Corte de caja de sucursales</h1>
+                    <span>
+                        
+                            {{ 
+                                props.selectedFilter === 'day' ? 'Filtro por día: ' + props.selectedDate.split('T')[0] :
+                                props.selectedFilter === 'week' ? 'Filtro por semana: ' + props.selectedWeek :
+                                props.selectedFilter === 'month' ? 'Filtro por mes: ' + props.selectedMonth.split('-').reverse().join('/') :
+                                ''
+                            }}
+                    </span>
                 </div>
-                <div class="">
-                    <p class="text-lg my-3">Total en efectivo: <span class="font-bold text-white md:text-2xl bg-green-500  px-2 py-1 rounded-lg">${{ total }}</span></p>
-                    <p class="text-lg ">Número de órdenes: <span class="font-bold text-white md:text-2xl bg-teal-400 px-2 py-1 rounded-lg">{{ numeroDeOrdenes }}</span></p>
+                <div v-if="$page.props.auth.user.sucursal_id > 0">
+                    <p class="text-lg my-3">Total en efectivo: <span class="font-bold text-white md:text-2xl bg-green-500 px-2 py-1 rounded-lg">${{ totalEfectivo }}</span></p>
+                    <p class="text-lg my-3">Total con tarjeta: <span class="font-bold text-white md:text-2xl bg-green-500 px-2 py-1 rounded-lg">${{ totalTarjeta }}</span></p>
+                    <p class="text-lg my-3">Total por transferencia: <span class="font-bold text-white md:text-2xl bg-green-500 px-2 py-1 rounded-lg">${{ totalTransferencia }}</span></p>
+                    
+                    <p class="text-lg my-3">Total bruto: <span class="font-bold text-white md:text-2xl bg-green-500 px-2 py-1 rounded-lg">${{ totalBruto }}</span></p>
+                    <p class="text-lg">Número de órdenes: <span class="font-bold text-white md:text-2xl bg-teal-400 px-2 py-1 rounded-lg">{{ numeroDeOrdenes }}</span></p>
+                </div>
+                <div v-else class="flex flex-col items-center">
+                    <div class="flex flex-col md:flex-row items-center gap-4">
+                        <div class="w-full gap-2 flex flex-col items-center">
+                            <label for="filter" class=" font-bold">Filtrar por:</label>
+                            <div class="flex gap-2">
+                                <select class=" ml-1 py-0 rounded" id="filter" v-model="selectedFilter">
+                                    <option value="day">Día</option>
+                                    <option value="week">Semana</option>
+                                    <option value="month">Mes</option>
+                                </select>
+        
+                                <input class="w-fit h-fit p-1 rounded" id="valueSelect" type="date" v-if="selectedFilter === 'day'" v-model="selectedDate" />
+                                <input class="w-fit h-fit p-1 rounded" id="valueSelect" type="week" v-if="selectedFilter === 'week'" v-model="selectedWeek" />
+                                <input class="w-fit h-fit p-1 rounded" id="valueSelect" type="month" v-if="selectedFilter === 'month'" v-model="selectedMonth" />
+                            </div>
+                            <div class="flex gap-1">
+                                <button class="text-sm rounded-lg shadow-lg disabled px-3 py-2 bg-blue-500 text-white hover:bg-blue-600" @click="fetchFilteredData">Aplicar Filtro</button>
+                                <button class="text-sm rounded-lg shadow-lg px-3 py-2 bg-gray-500 text-white hover:bg-gray-600" @click="resetFilters">
+                                    Limpiar Filtro
+                                </button>
+    
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="error" class="text-red-500 font-bold mt-2">{{ error }}</div>
+                    
                 </div>
             </div>
-        </template> 
+        </template>
         <div class="py-4">
-            <div class="max-w mx-auto sm:px-6 lg:px-8">
+            <div class="max-w mx-auto sm:px-2 lg:px-4">
                 <div class="overflow-hidden sm:rounded-lg">
-                    <div>
+                    <div v-if="$page.props.auth.user.sucursal_id > 0">
                         <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-                            <h2 class="text-2xl text-gray-500 font-bold mb-5 ">Pedidos atendidos de hoy</h2>
-                            <div class="grid grid-col-1 md:grid-cols-2 lg:grid-cols-3  gap-4">
-                                <div v-for="order in orders" :key="order.id" class="mb-4 shadow-xl bg-gray-100 p-4 rounded md">
+                            <h2 class="text-2xl text-gray-500 font-bold mb-5">Pedidos atendidos de hoy</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div v-for="order in orders" :key="order.id" class="mb-4 shadow-xl bg-gray-100 p-4 rounded">
                                     <div class="flex justify-between items-center">
-                                        <p>No. {{ order.id }} - {{ order.nombre_comprador }} - Total: ${{ order.total }}</p> 
-                                        
+                                        <p>No. {{ order.id }} - {{ order.nombre_comprador }} - Total: ${{ order.total }}</p>
                                     </div>
-                                    <div id="" class="" v-if="order.marquesitas && order.marquesitas.length">
+                                    <div v-if="order.marquesitas && order.marquesitas.length">
                                         <p class="font-bold mt-2">Marquesitas:</p>
                                         <ul class="list-disc pl-5">
                                             <li v-for="marquesita in order.marquesitas" :key="marquesita.id">
                                                 Precio: ${{ marquesita.precio_marquesita }} ({{ marquesita.cantidad }})
                                                 <ul class="list-disc pl-5">
-                                                    <div v-if="marquesita.ingredientes.length > 0 ">
+                                                    <div v-if="marquesita.ingredientes.length > 0">
                                                         <li v-for="ingrediente in marquesita.ingredientes" :key="ingrediente.id">
                                                             Ingrediente: {{ ingrediente.nombre }}
                                                         </li>
                                                     </div>
                                                     <div v-else>
-                                                        <li>
-                                                            Sencillas.
-                                                        </li>
+                                                        <li>Sencillas.</li>
                                                     </div>
                                                 </ul>
                                             </li>
@@ -82,6 +214,50 @@ defineProps({
                                                 {{ bebida.nombre }} - ${{ bebida.precio }} ({{ bebida.cantidad }})
                                             </li>
                                         </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="bg-white shadow-md rounded-xl px-8 pt-6 pb-8 mb-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                            <div v-for="sucursal in ordersBySucursal" :key="sucursal.id" class="col-span-1 border rounded-2xl p-4">
+                                <h1 class="text-center font-bold text-xl">Sucursal {{ sucursal.id }}</h1>
+                                <p>Total en efectivo: ${{ sucursal.totalEfectivo }}</p>
+                                <p>Total con tarjeta: ${{ sucursal.totalTarjeta }}</p>
+                                <p>Total por transferencia: ${{ sucursal.totalTransferencia }}</p>
+                                
+                                <p>Total bruto: ${{ sucursal.totalBruto }}</p>
+                                <p>Número de órdenes: {{ sucursal.numeroDeOrdenes }}</p>
+                                <div class="mt-4">
+                                    <div v-for="order in sucursal.orders" :key="order.id" class="mb-2">
+                                        <p>ID{{ sucursal.id }}-{{ order.id }} - {{ order.nombre_comprador }} - Total: ${{ order.total }}</p>
+                                        <div v-if="order.marquesitas && order.marquesitas.length">
+                                            <p class="font-bold mt-2">Marquesitas:</p>
+                                            <ul class="list-disc pl-5">
+                                                <li v-for="marquesita in order.marquesitas" :key="marquesita.id">
+                                                    Precio: ${{ marquesita.precio_marquesita }} ({{ marquesita.cantidad }})
+                                                    <ul class="list-disc pl-5">
+                                                        <div v-if="marquesita.ingredientes.length > 0">
+                                                            <li v-for="ingrediente in marquesita.ingredientes" :key="ingrediente.id">
+                                                                Ingrediente: {{ ingrediente.nombre }}
+                                                            </li>
+                                                        </div>
+                                                        <div v-else>
+                                                            <li>Sencillas.</li>
+                                                        </div>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        <div v-if="order.bebidas && order.bebidas.length">
+                                            <p class="font-bold mt-2">Bebidas:</p>
+                                            <ul class="list-disc pl-5">
+                                                <li v-for="bebida in order.bebidas" :key="bebida.id">
+                                                    {{ bebida.nombre }} - ${{ bebida.precio }} ({{ bebida.cantidad }})
+                                                </li>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

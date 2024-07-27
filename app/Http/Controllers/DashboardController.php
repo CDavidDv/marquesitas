@@ -48,31 +48,46 @@ class DashboardController extends Controller
 
     public function corte(Request $request)
     {
-        $user = $request->user(); 
+        $user = $request->user();
         $sucursalId = $user->sucursal_id;
 
         // Obtener la fecha de hoy
         $hoy = \Carbon\Carbon::now()->startOfDay();
-        
-        // Filtrar las órdenes por sucursal, método de pago "Efectivo" y fecha de hoy
-        $orders = Order::where('sucursal_id', $sucursalId)
-                        ->where('metodo', 'Efectivo')
-                        ->whereNotIn('estado',['Cancelado', 'Pagado'])
-                        ->whereDate('created_at', $hoy)
-                        ->with('marquesitas.ingredientes', 'bebidas')
-                        ->get();
 
-        $total = $orders->sum('total');
+        // Inicializar la consulta de órdenes
+        $query = Order::whereNotIn('estado', ['Cancelado', 'Pagado'])
+                    ->whereDate('created_at', $hoy)
+                    ->with('marquesitas.ingrediente', 'bebidas');
+        
+        // Si el usuario no es administrador, filtrar por sucursal
+        if ($sucursalId > 0) {
+            $query->where('sucursal_id', $sucursalId);
+        }
+
+        $orders = $query->get();
+
+        // Calcular totales por método de pago
+        $totalEfectivo = $orders->where('metodo', 'Efectivo')->sum('total');
+        $totalTarjeta = $orders->where('metodo', 'Tarjeta')->sum('total');
+        $totalTransferencia = $orders->where('metodo', 'Transferencia')->sum('total');
+
+        // Calcular total bruto
+        $totalBruto = $totalEfectivo + $totalTarjeta + $totalTransferencia ;
         $numeroDeOrdenes = $orders->count();
 
         return Inertia::render('Corte', [
             'orders' => $orders,
-            'total' => $total,
+            'totalEfectivo' => $totalEfectivo,
+            'totalTarjeta' => $totalTarjeta,
+            'totalTransferencia' => $totalTransferencia,
+            'totalBruto' => $totalBruto,
             'numeroDeOrdenes' => $numeroDeOrdenes,
             'hoy' => $hoy,
             'sucursal' => $sucursalId
         ]);
     }
+
+
 
     public function inventario(Request $request)
     {

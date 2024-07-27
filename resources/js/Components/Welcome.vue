@@ -217,7 +217,7 @@ const editarPedido = (id, estado) => {
                         </div>
                     </li>
                     </div>
-                    <div>
+                    <div v-else>
                         <p class="text-gray-400 py-2 px-auto text-center">
                             Sin pedidos en cola
                         </p>

@@ -188,13 +188,8 @@ const eliminarBebida = (id) => {
                     <label class="block">
                       <div class="flex justify-between items-center lg:flex-row flex-col">
                         <span class=" font-light text-sm lg:text-base">{{ ingrediente.nombre }}:</span>
-                        <div v-if="$page.props.auth.user.sucursal_id == 0" class="flex flex-col gap-1">
-                          <span @click="editarIngrediente(ingrediente.id)"
-                            class=" text-center text-xs p-1 bg-yellow-400 text-gray-700 font-bold rounded-lg cursor-pointer">Actualizar</span>
-                          <span @click="eliminarIngrediente(ingrediente.id)"
-                            class="text-center text-xs p-1 bg-red-600 text-white font-bold rounded-lg cursor-pointer">Eliminar</span>
-                        </div>
                       </div>
+                      
                       <input v-if="$page.props.auth.user.sucursal_id > 0" type="number"
                         v-model.number="form.ingredientes.find(i => i.id === ingrediente.id).cantidad"
                         class="mt-1 block w-full border rounded p-2" :min="0" />
@@ -204,7 +199,12 @@ const eliminarBebida = (id) => {
                           <input type="number" v-model.number="form.ingredientes.find(i => i.id === ingrediente.id).precio"
            class="mt-1 block w-full border rounded p-2" :min="0" />
                         </div>
-                      
+                        <div v-if="$page.props.auth.user.sucursal_id == 0" class="flex flex-col gap-1 pt-2 justify-center items-center">
+                          <span @click="editarIngrediente(ingrediente.id)"
+                            class=" text-center text-xs px-10 py-2 w-fit bg-blue-500 hover:bg-blue-600 text-white  font-bold rounded-lg cursor-pointer">Actualizar</span>
+                          <span @click="eliminarIngrediente(ingrediente.id)"
+                            class="text-center text-xs px-11 py-2 w-fit bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg cursor-pointer">Eliminar</span>
+                        </div>
                     </label>
                   </div>
                   <div v-if="$page.props.auth.user.sucursal_id == 0"
@@ -216,7 +216,7 @@ const eliminarBebida = (id) => {
                       <div class="flex justify-center w-full items-center">
                         <div class="flex flex-col gap-1 mt-2">
                           <span @click="agregarIngrediente"
-                            class="text-center text-xs p-1 bg-green-600 text-white font-bold rounded-lg cursor-pointer">Agregar</span>
+                            class="text-center text-xs px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg cursor-pointer">Agregar</span>
                         </div>
                       </div>
                     </label>
@@ -231,31 +231,33 @@ const eliminarBebida = (id) => {
                     <label class="block">
                       <div class="flex justify-between items-center lg:flex-row flex-col">
                         <span class="font-medium">{{ bebida.nombre }}:</span>
-                        <div v-if="$page.props.auth.user.sucursal_id == 0" class="flex flex-col gap-1">
-                          <span @click="editarBebida(bebida.id)"
-                            class=" text-center text-xs p-1 bg-yellow-400 text-gray-900 font-bold rounded-lg cursor-pointer">Actualizar</span>
-                          <span @click="eliminarBebida(bebida.id)"
-                            class="text-center text-xs p-1 bg-red-600 text-white font-bold rounded-lg cursor-pointer">Eliminar</span>
-                        </div>
+                        
                       </div>
                       <input v-if="$page.props.auth.user.sucursal_id > 0" type="number" v-model.number="form.bebidas.find(b => b.id === bebida.id).cantidad"
                         class="mt-1 block w-full border rounded p-2" :min="0" />
                       <input v-else type="text" v-model.trim="bebida.nombre"
                       class="mt-1 block w-full border rounded p-2"  />
+                      <div v-if="$page.props.auth.user.sucursal_id == 0" class="flex flex-col gap-1 mt-2 justify-center items-center ">
+                          <span @click="editarBebida(bebida.id)"
+                            class=" text-center w-fit text-xs px-10 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg cursor-pointer">Actualizar</span>
+                          <span @click="eliminarBebida(bebida.id)"
+                            class="text-center w-fit text-xs px-11 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg cursor-pointer">Eliminar</span>
+                        </div>
                     </label>
+                    
                   </div>
                   <div v-if="$page.props.auth.user.sucursal_id == 0"
                     class="bg-white shadow rounded p-4 items-center flex ">
-                    <label class="block w-full">
+                    <label class="block h-full ">
                       <div class="flex justify-between w-full items-center">
                         <span class="font-medium text-gray-500">Nuevo item</span>
-                        <div class="flex flex-col gap-1">
-                          <span @click="agregarBebida"
-                            class=" text-center text-xs p-1 bg-green-600 text-white font-bold rounded-lg cursor-pointer">Agregar</span>
-                        </div>
                       </div>
                       <input type="text" placeholder="Bebida" class="mt-1 block w-full border rounded p-2"
                         :min="0" />
+                        <div class="flex justify-center items-center w-full mt-2">
+                          <span @click="agregarBebida"
+                            class=" text-center text-xs px-10 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg cursor-pointer">Agregar</span>
+                        </div>
                     </label>
                   </div>
                 </div>

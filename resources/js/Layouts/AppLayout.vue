@@ -52,7 +52,7 @@ const logout = () => {
                                     Tablero principal
                                 </NavLink>
                                 <NavLink :href="route('corte')" :active="route().current('corte')">
-                                    Corte 
+                                    Corte de caja
                                 </NavLink>
                                 <NavLink :href="route('inventario')" :active="route().current('inventario')">
                                     Inventario
@@ -201,7 +201,7 @@ const logout = () => {
                             Tablero principal
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('corte')" :active="route().current('corte')">
-                            Corte 
+                            Corte de caja
                         </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('inventario')" :active="route().current('inventario')">
                             Inventario
