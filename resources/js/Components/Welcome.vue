@@ -14,7 +14,7 @@ const props = defineProps({
         type: Object,
         required: true
     },
-    orders: {
+    ordens: {
         type: Object,
         required: true
     },
@@ -29,7 +29,7 @@ const editarPedido = (id, estado) => {
     estado: estado
   };
 
-  router.put(`/orders/${id}`, pedido, {
+  router.put(`/ordens/${id}`, pedido, {
     onSuccess: () => {
       error.value = null;
       console.log('Estado del pedido actualizado con éxito');
@@ -46,32 +46,32 @@ const editarPedido = (id, estado) => {
 <template>
     <div>
         <div class=" lg:px-4  border-gray-200 ">
-            <div v-if="orders.length > 0" class="bg-white shadow-lg text-gray-500 leading-relaxed border p-8 rounded-3xl">                <!-- Primer pedido -->
+            <div v-if="ordens.length > 0" class="bg-white shadow-lg text-gray-500 leading-relaxed border p-8 rounded-3xl">                <!-- Primer pedido -->
                 <div class="flex flex-col">
                     <div class="flex w-full justify-between items-center mb-2">
-                        <p class="text-xl font-bold text-gray-700">Pedido de {{ orders[0].nombre_comprador }}</p>
-                        <p class="text-xl font-semibold text-gray-900">Estado: {{ orders[0].estado }}</p>
+                        <p class="text-xl font-bold text-gray-700">Pedido de {{ ordens[0].nombre_comprador }}</p>
+                        <p class="text-xl font-semibold text-gray-900">Estado: {{ ordens[0].estado }}</p>
                     </div>
                     <div class="grid grid-cols-12 gap-5 ">
 
                     
                         <!-- Marquesitas -->
                         <div class="col-span-6">
-                            <div v-if="orders[0].marquesitas.length > 0" class="mb-4">
+                            <div v-if="ordens[0].marquesitas.length > 0" class="mb-4">
                                 <h4 class="text-md font-medium">Marquesitas</h4>
                                 <ul class="w-full mt-2 grid grid-cols-12 gap-3">
-                                    <li v-for="(marquesita, index) in orders[0].marquesitas" :key="marquesita.id" class=" col-span-6">
+                                    <li v-for="(marquesita, index) in ordens[0].marquesitas" :key="marquesita.id" class=" col-span-6">
                                         <div class="flex justify-between w-full bg-gray-100 p-2 rounded-md">
                                             <p class=" font-semibold">Marquesita {{ index + 1 }}</p>
-                                            <p class="text-sm ">Individual: ${{ marquesita.precio_marquesita / marquesita.cantidad }}</p>
+                                            <p class="font-semibold ">Suma: ${{ marquesita.precio_marquesita * marquesita.cantidad }}</p>
                                         </div>
                                         <div v-if="marquesita.ingredientes.length > 0" class=" mt-2 ml-5">
                                             <div class="flex justify-between">
                                                 <p class="text-sm">
                                                     Cantidad: {{ marquesita.cantidad }}
                                                 </p>
-                                                <p class="font-bold">
-                                                    Suma: ${{ marquesita.precio_marquesita }}
+                                                <p class=" text-sm">
+                                                    Precio: ${{ marquesita.precio_marquesita }}
                                                 </p>
                                             </div>
                                             <ul class="">
@@ -84,7 +84,7 @@ const editarPedido = (id, estado) => {
                                         <div v-else class="ml-5 mt-2 flex flex-col">
                                             <div class="flex justify-between">
                                                 <p class="text-sm">Cantidad: {{ marquesita.cantidad }} </p>
-                                                <p class="font-bold ">Suma: ${{ marquesita.precio_marquesita }}</p>
+                                                <p class="text-sm ">Individual: ${{ marquesita.precio_marquesita }}</p>
                                             </div>
                                             <p class="text-sm font-semibold ">Simples - $40.0</p>
                                         </div>
@@ -97,17 +97,17 @@ const editarPedido = (id, estado) => {
                         </div>
                         <!-- Bebidas -->
                         <div class="col-span-6">
-                            <div v-if="orders[0].bebidas.length > 0" class="mb-4">
+                            <div v-if="ordens[0].bebidas.length > 0" class="mb-4">
                                 <h4 class="text-md font-medium">Bebidas</h4>
                                 <ul class="w-full mt-2 grid grid-cols-12 gap-3">
-                                    <li v-for="bebida in orders[0].bebidas" :key="bebida.id" class="mb-2 bg-gray-50 p-2 rounded-md col-span-6">
+                                    <li v-for="bebida in ordens[0].bebidas" :key="bebida.id" class="mb-2 bg-gray-50 p-2 rounded-md col-span-6">
                                         <div class="flex justify-between">
                                             <p class="text-sm">{{ bebida.nombre }}</p>
-                                            <p class="text-sm">Precio: ${{ bebida.precio }}</p>
+                                            <p class=" font-bold">Suma: ${{ bebida.precio * bebida.cantidad }}</p>
                                         </div>
                                         <div class="flex justify-between pl-5">
                                             <p class="text-sm">Cantidad: {{ bebida.cantidad }}</p>
-                                            <p class=" font-bold">Suma: ${{ bebida.precio * bebida.cantidad }}</p>
+                                            <p class="text-sm">Precio: ${{ bebida.precio }}</p>
                                         </div>
                                     </li>
                                 </ul>
@@ -120,10 +120,10 @@ const editarPedido = (id, estado) => {
                         
                     </div>
                     <div class="text-right col-span-2 ">
-                            <p class="text-2xl font-semibold">Total: ${{ orders[0].total }}</p>
+                            <p class="text-2xl font-semibold">Total: ${{ ordens[0].total }}</p>
                             <div class="flex gap-3 justify-end  ">
-                                <span @click="editarPedido(orders[0].id, 'Cancelado')" class="cursor-pointer px-2 py-1 rounded-xl text-white bg-red-500 hover:bg-red-600">Cancelar</span>
-                                <span @click="editarPedido(orders[0].id, 'Entregado')" class="cursor-pointer px-2 py-1 rounded-xl text-white bg-green-500 hover:bg-green-600">Entregar</span>
+                                <span @click="editarPedido(ordens[0].id, 'Cancelado')" class="cursor-pointer px-2 py-1 rounded-xl text-white bg-red-500 hover:bg-red-600">Cancelar</span>
+                                <span @click="editarPedido(ordens[0].id, 'Entregado')" class="cursor-pointer px-2 py-1 rounded-xl text-white bg-green-500 hover:bg-green-600">Entregar</span>
                             </div>
                         </div>
                 </div>
@@ -138,22 +138,22 @@ const editarPedido = (id, estado) => {
             <div class=" bg-white  shadow-lg md:w-4/12 lg:w-4/12 col-span-5 rounded-3xl  border p-3  max-h-[60rem] overflow-scroll custom-scrollbar ">
                 
                 <ul >
-                    <div v-if="orders.length > 1">
+                    <div v-if="ordens.length > 1">
 
-                        <li class="px-4 border-b border-gray-400 pb-4" v-for="order in orders.slice(1)" :key="order.id">
+                        <li class="px-4 border-b border-gray-400 pb-4" v-for="orden in ordens.slice(1)" :key="orden.id">
                             <div class="flex flex-col">
                                 <div class="flex justify-between pt-4 w-full">
-                                    <p class="text-lg font-semibold textce mx-auto">Pedido de {{ order.nombre_comprador }}</p>
+                                    <p class="text-lg font-semibold textce mx-auto">Pedido de {{ orden.nombre_comprador }}</p>
                                 </div>
                                 <div>
                                     <!-- Marquesitas -->
-                                <div v-if="order.marquesitas.length > 0" class="mb-4">
+                                <div v-if="orden.marquesitas.length > 0" class="mb-4">
                                     <h4 class="text-md font-medium">Marquesitas</h4>
                                     <ul class="w-full mt-2">
-                                        <li v-for="(marquesita, index) in order.marquesitas" :key="marquesita.id" class="mb-2">
+                                        <li v-for="(marquesita, index) in orden.marquesitas" :key="marquesita.id" class="mb-2">
                                             <div class="flex justify-between w-full bg-gray-100 p-2 rounded-md">
                                                 <p class=" font-semibold">Marquesita {{ index + 1 }}</p>
-                                                <p class="text-sm ">Individual: ${{ marquesita.precio_marquesita / marquesita.cantidad }}</p>
+                                                <p class="font-bold ">Suma: ${{ marquesita.precio_marquesita * marquesita.cantidad }}</p>
                                             </div>
                                             <div v-if="marquesita.ingredientes.length > 0" class=" mt-2 ml-5">
                                                 <div class="flex justify-between">
@@ -161,7 +161,7 @@ const editarPedido = (id, estado) => {
                                                         Cantidad: {{ marquesita.cantidad }}
                                                     </p>
                                                     <p class="font-bold">
-                                                        Suma: ${{ marquesita.precio_marquesita }}
+                                                        Individual: ${{ marquesita.precio_marquesita }}
                                                     </p>
                                                 </div>
                                                 <ul class="">
@@ -174,7 +174,7 @@ const editarPedido = (id, estado) => {
                                             <div v-else class="ml-5 mt-2 flex flex-col">
                                                 <div class="flex justify-between">
                                                     <p class="text-sm">Cantidad: {{ marquesita.cantidad }} </p>
-                                                    <p class="font-bold ">Suma: ${{ marquesita.precio_marquesita }}</p>
+                                                    <p class="font-sm">Individual: ${{ marquesita.precio_marquesita }}</p>
                                                 </div>
                                                 <p class="text-sm font-semibold ">Simples - $40.0</p>
                                             </div>
@@ -187,17 +187,17 @@ const editarPedido = (id, estado) => {
                             </div>
                             <!-- Bebidas -->
                             <div>
-                                <div v-if="order.bebidas.length > 0" class="mb-4">
+                                <div v-if="orden.bebidas.length > 0" class="mb-4">
                                     <h4 class="text-md font-medium">Bebidas</h4>
                                     <ul class="w-full mt-2">
-                                        <li v-for="bebida in order.bebidas" :key="bebida.id" class="mb-2 bg-gray-50 p-2 rounded-md">
+                                        <li v-for="bebida in orden.bebidas" :key="bebida.id" class="mb-2 bg-gray-50 p-2 rounded-md">
                                             <div class="flex justify-between">
-                                                <p class="text-sm">{{ bebida.nombre }}</p>
-                                                <p class="text-sm">Precio: ${{ bebida.precio }}</p>
+                                                <p class=" font-bold ">{{ bebida.nombre }}</p>
+                                                <p class=" font-bold">Suma: ${{ bebida.precio * bebida.cantidad }}</p>
                                             </div>
                                             <div class="flex justify-between pl-5">
                                                 <p class="text-sm">Cantidad: {{ bebida.cantidad }}</p>
-                                                <p class=" font-bold">Suma: ${{ bebida.precio * bebida.cantidad }}</p>
+                                                <p class="text-sm">Precio: ${{ bebida.precio }}</p>
                                             </div>
                                         </li>
                                     </ul>
@@ -206,11 +206,11 @@ const editarPedido = (id, estado) => {
                                     <p class="text-sm text-gray-500">No tiene bebidas.</p>
                                 </div>
                                 <div class="text-right flex flex-col justify-end items-end">
-                                    <p class=" font-semibold text-gray-800">Estado: {{ order.estado }}</p>
-                                    <p class="text-2xl  font-semibold">Total: ${{ order.total }}</p>
+                                    <p class=" font-semibold text-gray-800">Estado: {{ orden.estado }}</p>
+                                    <p class="text-2xl  font-semibold">Total: ${{ orden.total }}</p>
                                     <div class="gap-3 flex">
-                                        <span @click="editarPedido(order.id, 'Cancelado')" class="cursor-pointer px-2 py-1 rounded-xl text-white bg-red-500 hover:bg-red-600">Cancelar</span>
-                                        <span @click="editarPedido(order.id, 'Entregado')" class="cursor-pointer px-2 py-1 rounded-xl text-white bg-green-500 hover:bg-green-600">Entregar</span>
+                                        <span @click="editarPedido(orden.id, 'Cancelado')" class="cursor-pointer px-2 py-1 rounded-xl text-white bg-red-500 hover:bg-red-600">Cancelar</span>
+                                        <span @click="editarPedido(orden.id, 'Entregado')" class="cursor-pointer px-2 py-1 rounded-xl text-white bg-green-500 hover:bg-green-600">Entregar</span>
                                     </div>
                                 </div>
                             </div>

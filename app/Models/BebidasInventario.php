@@ -9,5 +9,5 @@ class BebidasInventario extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['order_id', 'nombre', 'precio', 'cantidad'];
+    protected $fillable = ['orden_id', 'nombre', 'precio', 'cantidad'];
 }

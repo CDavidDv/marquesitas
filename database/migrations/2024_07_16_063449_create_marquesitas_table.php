@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('marquesitas', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('order_id');
+            $table->unsignedBigInteger('orden_id');
             $table->decimal('precio_marquesita', 12, 2);
             $table->timestamps();
             $table->string('cantidad')->nullable();
-            $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
+            $table->foreign('orden_id')->references('id')->on('ordens')->onDelete('cascade');
         });
     }
 

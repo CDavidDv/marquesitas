@@ -52,7 +52,6 @@ const handleAddToSelectionMarquesa = () => {
 
     if (existingMarquesita) {
         existingMarquesita.cantidad++;
-        existingMarquesita.precio += sumaIndividual.value;
     } else {
         marquesitas.value.push({
             ingredientes: [...selection.value],
@@ -160,7 +159,7 @@ const enviarPedido = () => {
     };
 
     // Enviar el pedido
-    router.post('/orders', pedido, {
+    router.post('/ordens', pedido, {
         onSuccess: () => {
             error.value = null;
             console.log('Pedido enviado con éxito');

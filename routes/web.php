@@ -4,7 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BebidaController;
 use App\Http\Controllers\IngredienteController;
 use App\Http\Controllers\InventarioController;
-use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrdenController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -17,13 +17,18 @@ Route::middleware([
 ])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
 
+    
+    Route::get('/dashboard-datos', [DashboardController::class, 'obtenerDatosDashboard']);
+
+
     Route::get('/corte', [DashboardController::class, 'corte'])->name('corte');
-    Route::get('/datos-filtrados', [OrderController::class, 'datosfiltrados']);
+    
+    Route::get('/datos-filtrados', [OrdenController::class, 'datosfiltrados']);
 
     Route::get('/inventario', [DashboardController::class, 'inventario'])->name('inventario');
-    Route::get('/orders', [OrderController::class, 'index']);
-    Route::post('/orders', [OrderController::class, 'store']);
-    Route::put('/orders/{id}', [OrderController::class, 'update']);
+    Route::get('/ordens', [OrdenController::class, 'index']);
+    Route::post('/ordens', [OrdenController::class, 'store']);
+    Route::put('/ordens/{id}', [OrdenController::class, 'update']);
 
     
     Route::post('/inventario', [InventarioController::class, 'store']);

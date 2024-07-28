@@ -9,11 +9,12 @@ class Marquesita extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['order_id', 'precio_marquesita', 'cantidad'];
+    protected $fillable = ['orden_id', 'precio_marquesita', 'cantidad'];
 
     public function ingredientes()
     {
         return $this->belongsToMany(Ingrediente::class, 'marquesita_ingrediente');
     }
+
 }
 

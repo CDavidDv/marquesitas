@@ -22,7 +22,8 @@ const form = reactive({
   bebidas: bebidas.value.map(b => ({
     id: b.id,
     nombre: b.nombre,
-    cantidad: (bebidasInventario.value.find(inv => inv.id === b.id)?.cantidad) || 0
+    cantidad: (bebidasInventario.value.find(inv => inv.id === b.id)?.cantidad) || 0,
+    precio: b.precio || 0
   })),
   ingredientesInventario: ingredientesInventario.value.map(i => ({
     id: i.id,
@@ -33,7 +34,8 @@ const form = reactive({
   bebidasInventario: bebidasInventario.value.map(b => ({
     id: b.id,
     nombre: b.nombre,
-    cantidad: b.cantidad || 0
+    cantidad: b.cantidad || 0,
+    precio: b.precio || 0
   }))
 });
 
@@ -184,7 +186,7 @@ const eliminarBebida = (id) => {
               <div class="mb-4">
                 <h2 class="text-xl font-bold mb-4">Ingredientes</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                  <div v-for="ingrediente in form.ingredientes" :key="ingrediente.id" class="bg-white shadow rounded p-4  ">
+                  <div v-for="ingrediente in form.ingredientes" :key="ingrediente.id" class="bg-white border border-gray-300 shadow rounded-md p-4  ">
                     <label class="block">
                       <div class="flex justify-between items-center lg:flex-row flex-col">
                         <span class=" font-light text-sm lg:text-base">{{ ingrediente.nombre }}:</span>
@@ -195,9 +197,9 @@ const eliminarBebida = (id) => {
                         class="mt-1 block w-full border rounded p-2" :min="0" />
                         <div v-else>
                           <input type="text" v-model.trim="ingrediente.nombre"
-                          class="mt-1 block w-full border rounded p-2"  />
+                          class="mt-1 block w-full border border-gray-300 rounded p-2"  />
                           <input type="number" v-model.number="form.ingredientes.find(i => i.id === ingrediente.id).precio"
-           class="mt-1 block w-full border rounded p-2" :min="0" />
+                          class="mt-1 block w-full border border-gray-300 rounded p-2" :min="0" />
                         </div>
                         <div v-if="$page.props.auth.user.sucursal_id == 0" class="flex flex-col gap-1 pt-2 justify-center items-center">
                           <span @click="editarIngrediente(ingrediente.id)"
@@ -208,11 +210,11 @@ const eliminarBebida = (id) => {
                     </label>
                   </div>
                   <div v-if="$page.props.auth.user.sucursal_id == 0"
-                    class="bg-white shadow rounded p-4 items-center flex ">
+                    class="bg-white shadow rounded border border-gray-300 p-4 items-center flex ">
                     <label class="block w-full">
                       <span class="font-medium text-gray-500">Nuevo item</span>
-                      <input id="nombre" type="text" placeholder="Ingrediente" class="mt-1 block w-full border rounded p-2"/>
-                      <input id="precio" type="number" placeholder="$0.0" class="mt-1 block w-full border rounded p-2" min="0"/>
+                      <input id="nombre" type="text" placeholder="Ingrediente" class="mt-1 block w-full border border-gray-300 rounded p-2"/>
+                      <input id="precio" type="number" placeholder="$0.0" class="mt-1 block w-full border border-gray-300 rounded p-2" min="0"/>
                       <div class="flex justify-center w-full items-center">
                         <div class="flex flex-col gap-1 mt-2">
                           <span @click="agregarIngrediente"
@@ -227,7 +229,7 @@ const eliminarBebida = (id) => {
               <div class="mb-4">
                 <h2 class="text-xl font-bold">Bebidas</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                  <div v-for="bebida in form.bebidas" :key="bebida.id" class="bg-white shadow rounded p-4">
+                  <div v-for="bebida in form.bebidas" :key="bebida.id" class="bg-white shadow rounded border border-gray-300 p-4">
                     <label class="block">
                       <div class="flex justify-between items-center lg:flex-row flex-col">
                         <span class="font-medium">{{ bebida.nombre }}:</span>
@@ -235,8 +237,12 @@ const eliminarBebida = (id) => {
                       </div>
                       <input v-if="$page.props.auth.user.sucursal_id > 0" type="number" v-model.number="form.bebidas.find(b => b.id === bebida.id).cantidad"
                         class="mt-1 block w-full border rounded p-2" :min="0" />
-                      <input v-else type="text" v-model.trim="bebida.nombre"
-                      class="mt-1 block w-full border rounded p-2"  />
+                        <div v-else>
+                          <input  type="text" v-model.trim="bebida.nombre"
+                          class="mt-1 block w-full border rounded p-2 border-gray-300"  />
+                          <input  type="text" v-model.number="bebida.precio"
+                          class="mt-1 block w-full border rounded p-2 border-gray-300"  />
+                        </div>
                       <div v-if="$page.props.auth.user.sucursal_id == 0" class="flex flex-col gap-1 mt-2 justify-center items-center ">
                           <span @click="editarBebida(bebida.id)"
                             class=" text-center w-fit text-xs px-10 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg cursor-pointer">Actualizar</span>
@@ -247,13 +253,15 @@ const eliminarBebida = (id) => {
                     
                   </div>
                   <div v-if="$page.props.auth.user.sucursal_id == 0"
-                    class="bg-white shadow rounded p-4 items-center flex ">
+                    class="bg-white shadow border border-gray-300 rounded p-4 items-center flex ">
                     <label class="block h-full ">
                       <div class="flex justify-between w-full items-center">
                         <span class="font-medium text-gray-500">Nuevo item</span>
                       </div>
-                      <input type="text" placeholder="Bebida" class="mt-1 block w-full border rounded p-2"
-                        :min="0" />
+                      <input id="nombre" type="text" placeholder="Bebida" class="mt-1 block w-full border border-gray-300 rounded p-2"
+                        :min="0" v-model.trim="form.bebidas.nombre" />
+                        <input id="precio" type="number" placeholder="$0.0" class="mt-1 block w-full border border-gray-300 rounded p-2"
+                        :min="0" v-model.number="form.bebidas.precio"/>
                         <div class="flex justify-center items-center w-full mt-2">
                           <span @click="agregarBebida"
                             class=" text-center text-xs px-10 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg cursor-pointer">Agregar</span>

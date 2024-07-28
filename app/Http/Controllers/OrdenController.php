@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Bebida;
 use App\Models\Marquesita;
-use App\Models\Order;
+use App\Models\Orden;
 use Inertia\Response;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,7 +14,7 @@ use App\Models\BebidasInventario;
 use App\Models\Ingrediente;
 use Carbon\Carbon;
 
-class OrderController extends Controller
+class OrdenController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -26,15 +26,15 @@ class OrderController extends Controller
 
         $bebidas = BebidasInventario::all();
         $ingredientes = Ingrediente::all();
-        $orders = Order::where('sucursal_id', $sucursalId)
+        $ordens = orden::where('sucursal_id', $sucursalId)
         ->whereNotIn('estado',['Entregado', 'Cancelado'])
-        ->with(['marquesita.ingrediente', 'bebidas'])
+        ->with(['marquesitas.ingredientes', 'bebidas'])
         ->get();
 
         return Inertia::render('Dashboard', [
             'bebidas' => $bebidas,
             'ingredientes' => $ingredientes,
-            'orders' => $orders
+            'ordens' => $ordens
         ]);
 
     }
@@ -49,7 +49,7 @@ class OrderController extends Controller
         $filter = $request->input('filter');
         $value = $request->input('value');
 
-        $query = Order::query();
+        $query = orden::query();
 
         switch ($filter) {
             case 'day':
@@ -68,7 +68,7 @@ class OrderController extends Controller
                 break;
             default:
                 return Inertia::render('Corte', [
-                    'orders' => [],
+                    'ordens' => [],
                     'totalEfectivo' => 0,
                     'totalTarjeta' => 0,
                     'totalTransferencia' => 0,
@@ -79,15 +79,15 @@ class OrderController extends Controller
                 ]);
         }
 
-        $orders = $query->get();
-        $totalEfectivo = $orders->where('metodo', 'Efectivo')->sum('total');
-        $totalTarjeta = $orders->where('metodo', 'Tarjeta')->sum('total');
-        $totalTransferencia = $orders->where('metodo', 'Transferencia')->sum('total');
+        $ordens = $query->get();
+        $totalEfectivo = $ordens->where('metodo', 'Efectivo')->sum('total');
+        $totalTarjeta = $ordens->where('metodo', 'Tarjeta')->sum('total');
+        $totalTransferencia = $ordens->where('metodo', 'Transferencia')->sum('total');
         $totalBruto = $totalEfectivo + $totalTarjeta + $totalTransferencia ;
-        $numeroDeOrdenes = $orders->count();
+        $numeroDeOrdenes = $ordens->count();
 
         return Inertia::render('Corte', [
-            'orders' => $orders,
+            'ordens' => $ordens,
             'totalEfectivo' => $totalEfectivo,
             'totalTarjeta' => $totalTarjeta,
             'totalTransferencia' => $totalTransferencia,
@@ -134,7 +134,7 @@ class OrderController extends Controller
 
         $pedidoData['sucursal_id'] = $sucursalId;
 
-        $order = Order::create($pedidoData);
+        $orden = orden::create($pedidoData);
 
         if (!empty($pedidoData['marquesitas'])) {
             foreach ($pedidoData['marquesitas'] as $marquesitaData) {
@@ -143,7 +143,7 @@ class OrderController extends Controller
                     'cantidad' => $marquesitaData['cantidad']
                 ]);
 
-                $order->marquesitas()->save($marquesita);
+                $orden->marquesitas()->save($marquesita);
 
                 if (isset($marquesitaData['ingredientes'])) {
                     foreach ($marquesitaData['ingredientes'] as $ingredienteId) {
@@ -161,7 +161,7 @@ class OrderController extends Controller
                     'cantidad' => $bebidaData['cantidad']
                 ]);
 
-                $order->bebidas()->save($bebida);
+                $orden->bebidas()->save($bebida);
             }
         }
 
@@ -198,7 +198,7 @@ class OrderController extends Controller
             'estado' => 'required|string'
         ]);
 
-        $pedido = Order::findOrFail($id);
+        $pedido = orden::findOrFail($id);
         $pedido->estado = $validated['estado'];
         $pedido->save();
 

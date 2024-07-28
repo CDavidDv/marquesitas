@@ -13,14 +13,14 @@ return new class extends Migration
     {
         Schema::create('bebidas', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('order_id')->nullable();
+            $table->unsignedBigInteger('orden_id')->nullable();
             $table->string('nombre');
             $table->string('detalles')->nullable();
             $table->decimal('precio', 12, 2);
             $table->unsignedInteger('cantidad')->nullable();
             $table->timestamps();
             
-            $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
+            $table->foreign('orden_id')->references('id')->on('ordens')->onDelete('cascade');
         });
     }
 

@@ -10,9 +10,12 @@ use App\Models\Bebida;
 use App\Models\BebidasInventario;
 use App\Models\Ingrediente;
 use App\Models\Inventario;
-use App\Models\Order;
+use App\Models\Orden;
+use App\Models\Sucursal;
+use Carbon\Carbon;
 use Inertia\Response;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -29,23 +32,103 @@ class DashboardController extends Controller
     public function dashboard(Request $request)
     {
         $user = $request->user(); 
-        $sucursalId = $user->sucursal_id;
+    $sucursalId = $user->sucursal_id;
 
-        $bebidas = BebidasInventario::all();
-        $ingredientes = Ingrediente::all();
-        $orders = Order::where('sucursal_id', $sucursalId)
+    $bebidas = BebidasInventario::all();
+    $ingredientes = Ingrediente::all();
+    
+    $ordens = Orden::where('sucursal_id', $sucursalId)
         ->whereNotIn('estado',['Entregado', 'Cancelado'])
         ->with(['marquesitas.ingredientes', 'bebidas'])
         ->get();
 
-        return Inertia::render('Dashboard', [
-            'bebidas' => $bebidas,
-            'ingredientes' => $ingredientes,
-            'orders' => $orders,
-            'sucursal' => $sucursalId
-        ]);
+    $ventasPorSucursal = Orden::select('sucursal_id', DB::raw('SUM(total) as total_ventas'))
+        ->whereYear('created_at', Carbon::now()->year)
+        ->whereMonth('created_at', Carbon::now()->month)
+        ->groupBy('sucursal_id')
+        ->orderBy('total_ventas', 'desc')
+        ->get();
+
+    $sucursalConMasVentas = $ventasPorSucursal->first();
+
+     // Obtener inventario
+    $ingredientesInventario = Inventario::whereNotNull('ingrediente_id')
+        ->with('ingrediente')
+        ->get();
+
+    $bebidasInventario = Inventario::whereNotNull('bebida_id')
+        ->with('bebida')
+        ->get();
+
+    // Obtener órdenes recientes
+    $ordersInventario = Orden::orderBy('created_at', 'desc')
+        ->limit(5)
+        ->get();
+
+    // Estadísticas de ventas
+    $ventasHoy = Orden::whereDate('created_at', Carbon::today())
+        ->sum('total');
+
+    $ventasMes = Orden::whereYear('created_at', Carbon::now()->year)
+        ->whereMonth('created_at', Carbon::now()->month)
+        ->sum('total');
+
+    $numeroVentasMes = Orden::whereYear('created_at', Carbon::now()->year)
+        ->whereMonth('created_at', Carbon::now()->month)
+        ->count();
+
+    $mesAnterior = Carbon::now()->subMonth();
+    $ventasMesAnterior = Orden::whereYear('created_at', $mesAnterior->year)
+        ->whereMonth('created_at', $mesAnterior->month)
+        ->sum('total');
+
+    $numeroVentasMesAnterior = Orden::whereYear('created_at', $mesAnterior->year)
+        ->whereMonth('created_at', $mesAnterior->month)
+        ->count();
+
+    // Calcular la diferencia porcentual
+    if ($ventasMesAnterior == 0) {
+        $diferenciaPorcentual = $ventasMes == 0 ? 0 : 100; // Si no hay ventas en el mes anterior y actual, 0%, si solo en actual, 100%
+    } else {
+        $diferenciaPorcentual = (($ventasMes - $ventasMesAnterior) / $ventasMesAnterior) * 100;
     }
 
+    // Calcular ventas por mes para salesData
+    $salesData = Orden::select(DB::raw('MONTH(created_at) as month'), DB::raw('SUM(total) as sales'))
+        ->whereYear('created_at', Carbon::now()->year)
+        ->groupBy(DB::raw('MONTH(created_at)'))
+        ->get()
+        ->map(function ($item) {
+            return [
+                'month' => Carbon::create()->month($item->month)->format('F'), // Convertir número de mes a nombre de mes
+                'sales' => $item->sales
+            ];
+        });
+
+    return Inertia::render('Dashboard', [
+        'bebidas' => $bebidas,
+        'ingredientes' => $ingredientes,
+        'ordens' => $ordens,
+        'sucursal' => $sucursalId,
+        'tableroAdmin' => [
+            'ingredientes' => $ingredientesInventario,
+            'bebidas' => $bebidasInventario,
+            'ordens' => $ordersInventario,
+            'ventasHoy' => $ventasHoy,
+            'ventasMes' => $ventasMes,
+            'ventasMesAnterior' => $ventasMesAnterior,
+            'diferenciaPorcentual' => $diferenciaPorcentual,
+            'numeroVentasMesAnterior' => $numeroVentasMesAnterior,
+            'numeroVentasMes' => $numeroVentasMes,
+            'sucursalConMasVentas' => $sucursalConMasVentas,
+            'salesData' => $salesData // Agregar salesData aquí
+        ]
+    ]);
+
+        
+    }
+
+   
     public function corte(Request $request)
     {
         $user = $request->user();
@@ -55,28 +138,28 @@ class DashboardController extends Controller
         $hoy = \Carbon\Carbon::now()->startOfDay();
 
         // Inicializar la consulta de órdenes
-        $query = Order::whereNotIn('estado', ['Cancelado', 'Pagado'])
+        $query = Orden::whereNotIn('estado', ['Cancelado', 'Pagado'])
                     ->whereDate('created_at', $hoy)
-                    ->with('marquesitas.ingrediente', 'bebidas');
+                    ->with('marquesitas.ingredientes', 'bebidas');
         
         // Si el usuario no es administrador, filtrar por sucursal
         if ($sucursalId > 0) {
             $query->where('sucursal_id', $sucursalId);
         }
 
-        $orders = $query->get();
+        $ordens = $query->get();
 
         // Calcular totales por método de pago
-        $totalEfectivo = $orders->where('metodo', 'Efectivo')->sum('total');
-        $totalTarjeta = $orders->where('metodo', 'Tarjeta')->sum('total');
-        $totalTransferencia = $orders->where('metodo', 'Transferencia')->sum('total');
+        $totalEfectivo = $ordens->where('metodo', 'Efectivo')->sum('total');
+        $totalTarjeta = $ordens->where('metodo', 'Tarjeta')->sum('total');
+        $totalTransferencia = $ordens->where('metodo', 'Transferencia')->sum('total');
 
         // Calcular total bruto
-        $totalBruto = $totalEfectivo + $totalTarjeta + $totalTransferencia ;
-        $numeroDeOrdenes = $orders->count();
+        $totalBruto = $totalEfectivo + $totalTarjeta + $totalTransferencia;
+        $numeroDeOrdenes = $ordens->count();
 
         return Inertia::render('Corte', [
-            'orders' => $orders,
+            'ordens' => $ordens,
             'totalEfectivo' => $totalEfectivo,
             'totalTarjeta' => $totalTarjeta,
             'totalTransferencia' => $totalTransferencia,
@@ -86,6 +169,7 @@ class DashboardController extends Controller
             'sucursal' => $sucursalId
         ]);
     }
+
 
 
 
@@ -136,6 +220,72 @@ class DashboardController extends Controller
     }
 
 
+    public function obtenerDatosDashboard()
+    {
+        // Obtener inventario
+        $ingredientes = Inventario::whereNotNull('ingrediente_id')
+            ->with('ingrediente')
+            ->get();
+    
+        $bebidas = Inventario::whereNotNull('bebida_id')
+            ->with('bebida')
+            ->get();
+    
+        // Obtener órdenes recientes
+        $ordens = Orden::orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        $ventasPorSucursal = Orden::select('sucursal_id', DB::raw('SUM(total) as total_ventas'))
+            ->whereYear('created_at', Carbon::now()->year)
+            ->whereMonth('created_at', Carbon::now()->month)
+            ->groupBy('sucursal_id')
+            ->orderBy('total_ventas', 'desc')
+            ->get();
+
+        $sucursalConMasVentas = $ventasPorSucursal->first();
+    
+        // Estadísticas de ventas
+        $ventasHoy = Orden::whereDate('created_at', Carbon::today())
+            ->sum('total');
+    
+        $ventasMes = Orden::whereYear('created_at', Carbon::now()->year)
+            ->whereMonth('created_at', Carbon::now()->month)
+            ->sum('total');
+
+        $numeroVentasMes = Orden::whereYear('created_at', Carbon::now()->year)
+            ->whereMonth('created_at', Carbon::now()->month)
+            ->count();
+    
+        $mesAnterior = Carbon::now()->subMonth();
+        $ventasMesAnterior = Orden::whereYear('created_at', $mesAnterior->year)
+            ->whereMonth('created_at', $mesAnterior->month)
+            ->sum('total');
+
+        $numeroVentasMesAnterior = Orden::whereYear('created_at', $mesAnterior->year)
+            ->whereMonth('created_at', $mesAnterior->month)
+            ->count();
+    
+        // Calcular la diferencia porcentual
+        if ($ventasMesAnterior == 0) {
+            $diferenciaPorcentual = $ventasMes == 0 ? 0 : 100; // Si no hay ventas en el mes anterior y actual, 0%, si solo en actual, 100%
+        } else {
+            $diferenciaPorcentual = (($ventasMes - $ventasMesAnterior) / $ventasMesAnterior) * 100;
+        }
+    
+        return Inertia::render('Dashboard', [
+            'ingredientes' => $ingredientes,
+            'bebidas' => $bebidas,
+            'ordens' => $ordens,
+            'ventasHoy' => $ventasHoy,
+            'ventasMes' => $ventasMes,
+            'ventasMesAnterior' => $ventasMesAnterior,
+            'diferenciaPorcentual' => $diferenciaPorcentual,
+            'numeroVentasMesAnterior' => $numeroVentasMesAnterior,
+            'numeroVentasMes' => $numeroVentasMes,
+            'sucursalConMasVentas' => $sucursalConMasVentas
+        ]);
+    }   
 
 
 }

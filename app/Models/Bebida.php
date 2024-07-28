@@ -9,7 +9,7 @@ class Bebida extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['order_id', 'nombre', 'precio', 'cantidad'];
+    protected $fillable = ['orden_id', 'nombre', 'precio', 'cantidad'];
     public function inventarios()
     {
         return $this->hasMany(Inventario::class, 'bebida_id');

@@ -9,7 +9,7 @@ const totalEfectivo = ref(props.totalEfectivo || 0);
 const totalTarjeta = ref(props.totalTarjeta || 0);
 const totalTransferencia = ref(props.totalTransferencia || 0);
 const totalBruto = ref(props.totalBruto || 0);
-const orders = ref(props.orders || []);
+const ordens = ref(props.ordens || []);
 const numeroDeOrdenes = ref(props.numeroDeOrdenes || 0);
 const hoy = ref(props.hoy || '');
 const sucursal = ref(props.sucursal || 0);
@@ -20,48 +20,48 @@ const selectedDate = ref(props.selectedDate || '');
 const selectedWeek = ref(props.selectedWeek || '');
 const selectedMonth = ref(props.selectedMonth || '');
 
-const ordersBySucursal = computed(() => {
+const ordensBySucursal = computed(() => {
     if (sucursal.value > 0) return [];
 
-    const grouped = orders.value.reduce((acc, order) => {
-        if (!acc[order.sucursal_id]) {
-            acc[order.sucursal_id] = {
-                id: order.sucursal_id,
+    const grouped = ordens.value.reduce((acc, orden) => {
+        if (!acc[orden.sucursal_id]) {
+            acc[orden.sucursal_id] = {
+                id: orden.sucursal_id,
                 totalEfectivo: 0,
                 totalTarjeta: 0,
                 totalTransferencia: 0,
                 totalBruto: 0,
                 numeroDeOrdenes: 0,
-                orders: []
+                ordens: []
             };
         }
-        const totalValue = parseFloat(order.total);
+        const totalValue = parseFloat(orden.total);
         if (!isNaN(totalValue)) {
-            acc[order.sucursal_id].totalBruto += totalValue;
-            acc[order.sucursal_id].numeroDeOrdenes += 1;
-            acc[order.sucursal_id].orders.push(order);
+            acc[orden.sucursal_id].totalBruto += totalValue;
+            acc[orden.sucursal_id].numeroDeOrdenes += 1;
+            acc[orden.sucursal_id].ordens.push(orden);
             
-            switch (order.metodo) {
+            switch (orden.metodo) {
                 case 'Efectivo':
-                    acc[order.sucursal_id].totalEfectivo += totalValue;
+                    acc[orden.sucursal_id].totalEfectivo += totalValue;
                     break;
                 case 'Tarjeta':
-                    acc[order.sucursal_id].totalTarjeta += totalValue;
+                    acc[orden.sucursal_id].totalTarjeta += totalValue;
                     break;
                 case 'Transferencia':
-                    acc[order.sucursal_id].totalTransferencia += totalValue;
+                    acc[orden.sucursal_id].totalTransferencia += totalValue;
                     break;
             }
         }
         return acc;
     }, {});
 
-    const sortedOrders = Object.values(grouped).map(sucursal => {
-        sucursal.orders.sort((a, b) => a.id - b.id); // Ordenar de menor a mayor por id
+    const sortedOrdens = Object.values(grouped).map(sucursal => {
+        sucursal.ordens.sort((a, b) => a.id - b.id); // Ordenar de menor a mayor por id
         return sucursal;
     });
 
-    return sortedOrders;
+    return sortedOrdens;
 });
 
 const form = useForm({
@@ -99,7 +99,7 @@ const fetchFilteredData = () => {
             totalTarjeta.value = page.props.totalTarjeta;
             totalTransferencia.value = page.props.totalTransferencia;
             totalBruto.value = page.props.totalBruto;
-            orders.value = page.props.orders;
+            ordens.value = page.props.ordens;
             numeroDeOrdenes.value = page.props.numeroDeOrdenes;
             error.value = 'Debe seleccionar una fecha.';
             filtro.value = 'Filtrado por';
@@ -185,14 +185,14 @@ const resetFilters = () => {
                         <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
                             <h2 class="text-2xl text-gray-500 font-bold mb-5">Pedidos atendidos de hoy</h2>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div v-for="order in orders" :key="order.id" class="mb-4 shadow-xl bg-gray-100 p-4 rounded">
+                                <div v-for="orden in ordens" :key="orden.id" class="mb-4 shadow-xl bg-gray-100 p-4 rounded">
                                     <div class="flex justify-between items-center">
-                                        <p>No. {{ order.id }} - {{ order.nombre_comprador }} - Total: ${{ order.total }}</p>
+                                        <p>No. {{ orden.id }} - {{ orden.nombre_comprador }} - Total: ${{ orden.total }}</p>
                                     </div>
-                                    <div v-if="order.marquesitas && order.marquesitas.length">
+                                    <div v-if="orden.marquesitas && orden.marquesitas.length">
                                         <p class="font-bold mt-2">Marquesitas:</p>
                                         <ul class="list-disc pl-5">
-                                            <li v-for="marquesita in order.marquesitas" :key="marquesita.id">
+                                            <li v-for="marquesita in orden.marquesitas" :key="marquesita.id">
                                                 Precio: ${{ marquesita.precio_marquesita }} ({{ marquesita.cantidad }})
                                                 <ul class="list-disc pl-5">
                                                     <div v-if="marquesita.ingredientes.length > 0">
@@ -207,10 +207,10 @@ const resetFilters = () => {
                                             </li>
                                         </ul>
                                     </div>
-                                    <div v-if="order.bebidas && order.bebidas.length">
+                                    <div v-if="orden.bebidas && orden.bebidas.length">
                                         <p class="font-bold mt-2">Bebidas:</p>
                                         <ul class="list-disc pl-5">
-                                            <li v-for="bebida in order.bebidas" :key="bebida.id">
+                                            <li v-for="bebida in orden.bebidas" :key="bebida.id">
                                                 {{ bebida.nombre }} - ${{ bebida.precio }} ({{ bebida.cantidad }})
                                             </li>
                                         </ul>
@@ -221,7 +221,7 @@ const resetFilters = () => {
                     </div>
                     <div v-else class="bg-white shadow-md rounded-xl px-8 pt-6 pb-8 mb-4">
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                            <div v-for="sucursal in ordersBySucursal" :key="sucursal.id" class="col-span-1 border rounded-2xl p-4">
+                            <div v-for="sucursal in ordensBySucursal" :key="sucursal.id" class="col-span-1 border rounded-2xl p-4">
                                 <h1 class="text-center font-bold text-xl">Sucursal {{ sucursal.id }}</h1>
                                 <p>Total en efectivo: ${{ sucursal.totalEfectivo }}</p>
                                 <p>Total con tarjeta: ${{ sucursal.totalTarjeta }}</p>
@@ -230,12 +230,12 @@ const resetFilters = () => {
                                 <p>Total bruto: ${{ sucursal.totalBruto }}</p>
                                 <p>Número de órdenes: {{ sucursal.numeroDeOrdenes }}</p>
                                 <div class="mt-4">
-                                    <div v-for="order in sucursal.orders" :key="order.id" class="mb-2">
-                                        <p>ID{{ sucursal.id }}-{{ order.id }} - {{ order.nombre_comprador }} - Total: ${{ order.total }}</p>
-                                        <div v-if="order.marquesitas && order.marquesitas.length">
+                                    <div v-for="orden in sucursal.ordens" :key="orden.id" class="mb-2">
+                                        <p>ID{{ sucursal.id }}-{{ orden.id }} - {{ orden.nombre_comprador }} - Total: ${{ orden.total }}</p>
+                                        <div v-if="orden.marquesitas && orden.marquesitas.length">
                                             <p class="font-bold mt-2">Marquesitas:</p>
                                             <ul class="list-disc pl-5">
-                                                <li v-for="marquesita in order.marquesitas" :key="marquesita.id">
+                                                <li v-for="marquesita in orden.marquesitas" :key="marquesita.id">
                                                     Precio: ${{ marquesita.precio_marquesita }} ({{ marquesita.cantidad }})
                                                     <ul class="list-disc pl-5">
                                                         <div v-if="marquesita.ingredientes.length > 0">
@@ -250,10 +250,10 @@ const resetFilters = () => {
                                                 </li>
                                             </ul>
                                         </div>
-                                        <div v-if="order.bebidas && order.bebidas.length">
+                                        <div v-if="orden.bebidas && orden.bebidas.length">
                                             <p class="font-bold mt-2">Bebidas:</p>
                                             <ul class="list-disc pl-5">
-                                                <li v-for="bebida in order.bebidas" :key="bebida.id">
+                                                <li v-for="bebida in orden.bebidas" :key="bebida.id">
                                                     {{ bebida.nombre }} - ${{ bebida.precio }} ({{ bebida.cantidad }})
                                                 </li>
                                             </ul>
