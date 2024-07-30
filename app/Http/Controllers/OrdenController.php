@@ -49,7 +49,7 @@ class OrdenController extends Controller
         $filter = $request->input('filter');
         $value = $request->input('value');
 
-        $query = orden::query();
+        $query = Orden::query();
 
         switch ($filter) {
             case 'day':
@@ -74,17 +74,24 @@ class OrdenController extends Controller
                     'totalTransferencia' => 0,
                     'totalBruto' => 0,
                     'numeroDeOrdenes' => 0,
+                    'numeroDeMarquesitas' => 0,
                     'sucursal' => auth()->user()->sucursal_id,
                     'hoy' => Carbon::now()->toDateString(),
                 ]);
         }
 
-        $ordens = $query->get();
+        $ordens = $query->with('marquesitas')->get(); // Asegúrate de cargar la relación marquesitas
+
         $totalEfectivo = $ordens->where('metodo', 'Efectivo')->sum('total');
         $totalTarjeta = $ordens->where('metodo', 'Tarjeta')->sum('total');
         $totalTransferencia = $ordens->where('metodo', 'Transferencia')->sum('total');
-        $totalBruto = $totalEfectivo + $totalTarjeta + $totalTransferencia ;
+        $totalBruto = $totalEfectivo + $totalTarjeta + $totalTransferencia;
         $numeroDeOrdenes = $ordens->count();
+        
+        // Calcular el número total de marquesitas considerando la columna cantidad
+        $numeroDeMarquesitas = $ordens->sum(function ($orden) {
+            return $orden->marquesitas->sum('cantidad'); // Sumar la columna 'cantidad'
+        });
 
         return Inertia::render('Corte', [
             'ordens' => $ordens,
@@ -93,6 +100,7 @@ class OrdenController extends Controller
             'totalTransferencia' => $totalTransferencia,
             'totalBruto' => $totalBruto,
             'numeroDeOrdenes' => $numeroDeOrdenes,
+            'numeroDeMarquesitas' => $numeroDeMarquesitas,
             'sucursal' => auth()->user()->sucursal_id,
             'hoy' => Carbon::now()->toDateString(),
             'selectedFilter' => $filter,
@@ -121,6 +129,8 @@ class OrdenController extends Controller
 
         $pedidoData = $request->validate([
             'nombre_comprador' => 'required|string',
+            'pago' => 'required|numeric',  
+            'cambio' => 'required|numeric',  
             'estado' => 'required|string',
             'metodo' => 'required|string',
             'total' => 'required|numeric',
@@ -133,9 +143,9 @@ class OrdenController extends Controller
         }
 
         $pedidoData['sucursal_id'] = $sucursalId;
-
+        
         $orden = orden::create($pedidoData);
-
+        
         if (!empty($pedidoData['marquesitas'])) {
             foreach ($pedidoData['marquesitas'] as $marquesitaData) {
                 $marquesita = new Marquesita([
@@ -167,7 +177,8 @@ class OrdenController extends Controller
 
         return redirect()->back()->with('success', [
             'message' => 'Pedido guardado con éxito',
-            'clearForm' => true
+            'clearForm' => true,
+            
         ]);
     }
 

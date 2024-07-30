@@ -120,7 +120,9 @@ const editarPedido = (id, estado) => {
                         
                     </div>
                     <div class="text-right col-span-2 ">
-                            <p class="text-2xl font-semibold">Total: ${{ ordens[0].total }}</p>
+                            <p class="text-2xl font-semibold text-gray-950">Total: ${{ ordens[0].total }}</p>
+                            <p>Recibido: ${{ ordens[0].pago }}</p>
+                            <p>Cambio: ${{ ordens[0].cambio }}</p>
                             <div class="flex gap-3 justify-end  ">
                                 <span @click="editarPedido(ordens[0].id, 'Cancelado')" class="cursor-pointer px-2 py-1 rounded-xl text-white bg-red-500 hover:bg-red-600">Cancelar</span>
                                 <span @click="editarPedido(ordens[0].id, 'Entregado')" class="cursor-pointer px-2 py-1 rounded-xl text-white bg-green-500 hover:bg-green-600">Entregar</span>
@@ -208,6 +210,8 @@ const editarPedido = (id, estado) => {
                                 <div class="text-right flex flex-col justify-end items-end">
                                     <p class=" font-semibold text-gray-800">Estado: {{ orden.estado }}</p>
                                     <p class="text-2xl  font-semibold">Total: ${{ orden.total }}</p>
+                                    <p class=" text-gray-600">Recibido: ${{ ordens[0].pago }}</p>
+                                    <p class=" text-gray-600">Cambio: ${{ ordens[0].cambio }}</p>
                                     <div class="gap-3 flex">
                                         <span @click="editarPedido(orden.id, 'Cancelado')" class="cursor-pointer px-2 py-1 rounded-xl text-white bg-red-500 hover:bg-red-600">Cancelar</span>
                                         <span @click="editarPedido(orden.id, 'Entregado')" class="cursor-pointer px-2 py-1 rounded-xl text-white bg-green-500 hover:bg-green-600">Entregar</span>

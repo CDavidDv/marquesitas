@@ -189,7 +189,8 @@ const eliminarBebida = (id) => {
                   <div v-for="ingrediente in form.ingredientes" :key="ingrediente.id" class="bg-white border border-gray-300 shadow rounded-md p-4  ">
                     <label class="block">
                       <div class="flex justify-between items-center lg:flex-row flex-col">
-                        <span class=" font-light text-sm lg:text-base">{{ ingrediente.nombre }}:</span>
+                        <span v-if="$page.props.auth.user.sucursal_id > 0" class=" font-light text-sm lg:text-base">Cantidad de {{ ingrediente.nombre }}:</span>
+                        <span v-else class=" font-light text-sm lg:text-base">Nombre: </span>
                       </div>
                       
                       <input v-if="$page.props.auth.user.sucursal_id > 0" type="number"
@@ -198,8 +199,12 @@ const eliminarBebida = (id) => {
                         <div v-else>
                           <input type="text" v-model.trim="ingrediente.nombre"
                           class="mt-1 block w-full border border-gray-300 rounded p-2"  />
-                          <input type="number" v-model.number="form.ingredientes.find(i => i.id === ingrediente.id).precio"
-                          class="mt-1 block w-full border border-gray-300 rounded p-2" :min="0" />
+                          <p>Precio: </p>
+                          <div class="flex items-center">
+                            <p class="px-2">$</p>
+                            <input type="number" v-model.number="form.ingredientes.find(i => i.id === ingrediente.id).precio"
+                            class="mt-1 block w-full border border-gray-300 rounded p-2 text-right" :min="0" />
+                          </div>
                         </div>
                         <div v-if="$page.props.auth.user.sucursal_id == 0" class="flex flex-col gap-1 pt-2 justify-center items-center">
                           <span @click="editarIngrediente(ingrediente.id)"
@@ -232,16 +237,21 @@ const eliminarBebida = (id) => {
                   <div v-for="bebida in form.bebidas" :key="bebida.id" class="bg-white shadow rounded border border-gray-300 p-4">
                     <label class="block">
                       <div class="flex justify-between items-center lg:flex-row flex-col">
-                        <span class="font-medium">{{ bebida.nombre }}:</span>
+                        <span v-if="$page.props.auth.user.sucursal_id > 0" class="font-medium">Cantidad de {{ bebida.nombre }}:</span>
+                        <span v-else class="font-medium">Nombre:</span>
                         
                       </div>
+                      
                       <input v-if="$page.props.auth.user.sucursal_id > 0" type="number" v-model.number="form.bebidas.find(b => b.id === bebida.id).cantidad"
                         class="mt-1 block w-full border rounded p-2" :min="0" />
                         <div v-else>
                           <input  type="text" v-model.trim="bebida.nombre"
                           class="mt-1 block w-full border rounded p-2 border-gray-300"  />
-                          <input  type="text" v-model.number="bebida.precio"
-                          class="mt-1 block w-full border rounded p-2 border-gray-300"  />
+                          <div class="flex items-center">
+                            <p class="px-2">$</p>
+                            <input  type="text" v-model.number="bebida.precio"
+                            class="mt-1 block w-full border rounded p-2 border-gray-300"  />
+                          </div>
                         </div>
                       <div v-if="$page.props.auth.user.sucursal_id == 0" class="flex flex-col gap-1 mt-2 justify-center items-center ">
                           <span @click="editarBebida(bebida.id)"

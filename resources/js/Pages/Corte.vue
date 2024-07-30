@@ -19,6 +19,7 @@ const selectedFilter = ref(props.selectedFilter || 'day');
 const selectedDate = ref(props.selectedDate || '');
 const selectedWeek = ref(props.selectedWeek || '');
 const selectedMonth = ref(props.selectedMonth || '');
+const numeroDeMarquesitas = ref(props.numeroDeMarquesitas || 0);
 
 const ordensBySucursal = computed(() => {
     if (sucursal.value > 0) return [];
@@ -100,6 +101,7 @@ const fetchFilteredData = () => {
             totalTransferencia.value = page.props.totalTransferencia;
             totalBruto.value = page.props.totalBruto;
             ordens.value = page.props.ordens;
+            numeroDeMarquesitas.value = page.props.numeroDeMarquesitas;
             numeroDeOrdenes.value = page.props.numeroDeOrdenes;
             error.value = 'Debe seleccionar una fecha.';
             filtro.value = 'Filtrado por';
@@ -115,8 +117,11 @@ const resetFilters = () => {
     selectedDate.value = '';
     selectedWeek.value = '';
     selectedMonth.value = '';
+    contador.value = 0;
     router.get('/corte')
 };
+
+
 </script>
 
 
@@ -130,7 +135,11 @@ const resetFilters = () => {
                         <h1 class="text-xl font-bold">Corte de caja de sucursal {{ sucursal }}</h1>
                         <p>Corte del día {{ hoy.split('T')[0].split('-')[2] + "/" + hoy.split('T')[0].split('-')[1] + "/" + hoy.split('T')[0].split('-')[0] }}</p>
                     </div>
-                    <h1 v-else class="lg:text-2xl sm:text-xl font-bold">Corte de caja de sucursales</h1>
+                    <div v-else>
+                        <h1  class="lg:text-2xl sm:text-xl font-bold">Corte de caja de sucursales</h1>
+                        <p class="text-lg">Número de órdenes: <span class="font-bold  md:text-2xl px-2 py-1 rounded-lg">{{ numeroDeOrdenes }}</span></p>
+                    </div>
+                    <p class="text-lg">Número de marquesitas: <span class="font-bold md:text-2xl px-2 py-1 rounded-lg">{{ numeroDeMarquesitas }}</span></p>
                     <span>
                         
                             {{ 
@@ -148,6 +157,7 @@ const resetFilters = () => {
                     
                     <p class="text-lg my-3">Total bruto: <span class="font-bold text-white md:text-2xl bg-green-500 px-2 py-1 rounded-lg">${{ totalBruto }}</span></p>
                     <p class="text-lg">Número de órdenes: <span class="font-bold text-white md:text-2xl bg-teal-400 px-2 py-1 rounded-lg">{{ numeroDeOrdenes }}</span></p>
+                    
                 </div>
                 <div v-else class="flex flex-col items-center">
                     <div class="flex flex-col md:flex-row items-center gap-4">
@@ -185,9 +195,9 @@ const resetFilters = () => {
                         <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
                             <h2 class="text-2xl text-gray-500 font-bold mb-5">Pedidos atendidos de hoy</h2>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div v-for="orden in ordens" :key="orden.id" class="mb-4 shadow-xl bg-gray-100 p-4 rounded">
+                                <div v-for="(orden, index) in ordens" :key="orden.id" class="mb-4 shadow-xl bg-gray-100 p-4 rounded">
                                     <div class="flex justify-between items-center">
-                                        <p>No. {{ orden.id }} - {{ orden.nombre_comprador }} - Total: ${{ orden.total }}</p>
+                                        <p>No. {{ index+1 }} - {{ orden.nombre_comprador }} - Total: ${{ orden.total }}</p>
                                     </div>
                                     <div v-if="orden.marquesitas && orden.marquesitas.length">
                                         <p class="font-bold mt-2">Marquesitas:</p>
@@ -195,7 +205,7 @@ const resetFilters = () => {
                                             <li v-for="marquesita in orden.marquesitas" :key="marquesita.id">
                                                 Precio: ${{ marquesita.precio_marquesita }} ({{ marquesita.cantidad }})
                                                 <ul class="list-disc pl-5">
-                                                    <div v-if="marquesita.ingredientes.length > 0">
+                                                    <div v-if="marquesita.ingredientes?.length > 0">
                                                         <li v-for="ingrediente in marquesita.ingredientes" :key="ingrediente.id">
                                                             Ingrediente: {{ ingrediente.nombre }}
                                                         </li>
@@ -230,15 +240,15 @@ const resetFilters = () => {
                                 <p>Total bruto: ${{ sucursal.totalBruto }}</p>
                                 <p>Número de órdenes: {{ sucursal.numeroDeOrdenes }}</p>
                                 <div class="mt-4">
-                                    <div v-for="orden in sucursal.ordens" :key="orden.id" class="mb-2">
-                                        <p>ID{{ sucursal.id }}-{{ orden.id }} - {{ orden.nombre_comprador }} - Total: ${{ orden.total }}</p>
+                                    <div v-for="(orden, index) in sucursal.ordens" :key="orden.id" class="mb-2">
+                                        <p class=" font-bold">>>ID{{ sucursal.id }}-{{ index+1 }} - {{ orden.nombre_comprador }} - Total: ${{ orden.total + '<<' }}</p>
                                         <div v-if="orden.marquesitas && orden.marquesitas.length">
                                             <p class="font-bold mt-2">Marquesitas:</p>
                                             <ul class="list-disc pl-5">
                                                 <li v-for="marquesita in orden.marquesitas" :key="marquesita.id">
                                                     Precio: ${{ marquesita.precio_marquesita }} ({{ marquesita.cantidad }})
                                                     <ul class="list-disc pl-5">
-                                                        <div v-if="marquesita.ingredientes.length > 0">
+                                                        <div v-if="marquesita.ingredientes?.length > 0">
                                                             <li v-for="ingrediente in marquesita.ingredientes" :key="ingrediente.id">
                                                                 Ingrediente: {{ ingrediente.nombre }}
                                                             </li>

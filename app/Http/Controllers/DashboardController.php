@@ -135,13 +135,13 @@ class DashboardController extends Controller
         $sucursalId = $user->sucursal_id;
 
         // Obtener la fecha de hoy
-        $hoy = \Carbon\Carbon::now()->startOfDay();
+        $hoy = Carbon::now()->startOfDay();
 
         // Inicializar la consulta de órdenes
         $query = Orden::whereNotIn('estado', ['Cancelado', 'Pagado'])
                     ->whereDate('created_at', $hoy)
                     ->with('marquesitas.ingredientes', 'bebidas');
-        
+
         // Si el usuario no es administrador, filtrar por sucursal
         if ($sucursalId > 0) {
             $query->where('sucursal_id', $sucursalId);
@@ -157,6 +157,11 @@ class DashboardController extends Controller
         // Calcular total bruto
         $totalBruto = $totalEfectivo + $totalTarjeta + $totalTransferencia;
         $numeroDeOrdenes = $ordens->count();
+        
+        // Calcular el número de marquesitas
+        $numeroDeMarquesitas = $ordens->sum(function ($orden) {
+            return $orden->marquesitas->sum('cantidad'); // Sumar la columna 'cantidad'
+        });
 
         return Inertia::render('Corte', [
             'ordens' => $ordens,
@@ -165,6 +170,7 @@ class DashboardController extends Controller
             'totalTransferencia' => $totalTransferencia,
             'totalBruto' => $totalBruto,
             'numeroDeOrdenes' => $numeroDeOrdenes,
+            'numeroDeMarquesitas' => $numeroDeMarquesitas,
             'hoy' => $hoy,
             'sucursal' => $sucursalId
         ]);

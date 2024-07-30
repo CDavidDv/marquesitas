@@ -9,7 +9,7 @@ class Orden extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['nombre_comprador', 'estado', 'metodo', 'total', 'sucursal_id'];
+    protected $fillable = ['nombre_comprador', 'estado', 'metodo', 'total', 'sucursal_id', 'pago', 'cambio'];
 
     public function marquesitas()
     {

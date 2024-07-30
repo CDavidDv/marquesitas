@@ -17,7 +17,9 @@ return new class extends Migration
             $table->string('estado'); // pagado // entregado // cancelado
             $table->string('metodo');
             $table->decimal('total', 12, 2)->nullable();
-            $table->unsignedInteger('sucursal_id'); // Asegúrate de que este campo esté aquí
+            $table->decimal('pago', 12, 2)->nullable();
+            $table->decimal('cambio', 12, 2)->nullable();
+            $table->unsignedInteger('sucursal_id'); 
             $table->timestamps();
         });
         

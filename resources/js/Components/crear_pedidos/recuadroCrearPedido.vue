@@ -6,7 +6,7 @@ export default {
 
 <script setup>
 import { useForm, router, usePage } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 
 const props = defineProps({
     bebidas: {
@@ -26,7 +26,43 @@ const selection = ref([]);
 const sumaIndividual = ref(40.0);
 const metodoPago = ref('Efectivo');
 const nombreComprador = ref('');
+const searchQueryIngredients = ref('');
+const searchQueryBebidas = ref('');
 
+const pago = ref(0); 
+const cambio = ref(0);
+
+const computedCambio = computed(() => {
+    return pago.value > sumaTotal.value ? (pago.value - sumaTotal.value).toFixed(2) : 0;
+});
+
+watch(pago, (newValue) => {
+    if (newValue > sumaTotal.value) {
+        cambio.value = computedCambio.value;
+    } else {
+        cambio.value = 0;
+    }
+});
+
+const filteredIngredients = computed(() => {
+  return props.ingredientes.filter(ingrediente =>
+    ingrediente.nombre.toLowerCase().includes(searchQueryIngredients.value.toLowerCase())
+  );
+});
+
+const filteredBebidas = computed(() => {
+  return props.bebidas.filter(bebida =>
+    bebida.nombre.toLowerCase().includes(searchQueryBebidas.value.toLowerCase())
+  );
+});
+
+const clearSearchIngredients = () => {
+  searchQueryIngredients.value = '';
+};
+
+const clearSearchBebidas = () => {
+  searchQueryBebidas.value = '';
+};
 
 // Helper function to get a unique identifier for a set of ingredientes
 const getIngredientsKey = (ingredientes) => {
@@ -129,6 +165,11 @@ const pedido = ref({
 });
 
 const enviarPedido = () => {
+    if (pago.value < sumaTotal.value) {
+        error.value = 'Debe agregar un pago mayor al total de la cuenta.';
+        return;
+    }
+
     if (marquesitas.value.length === 0 && bebidasSelection.value.length === 0) {
         error.value = 'Debe agregar al menos una marquesita o bebida al pedido.';
         return;
@@ -139,12 +180,15 @@ const enviarPedido = () => {
         return;
     }
 
+    
     // Preparar los datos del pedido
     const pedido = {
-        nombre_comprador: nombreComprador.value == '' ? 'Usuario' : nombreComprador.value,
+        nombre_comprador: nombreComprador.value === '' ? 'Usuario' : nombreComprador.value,
         estado: 'Pagado',
         metodo: metodoPago.value,
         total: sumaTotal.value,
+        pago: metodoPago.value === 'Efectivo' ? pago.value : 0,  // Asegurar que el pago sea 0 si no es efectivo
+        cambio: metodoPago.value === 'Efectivo' ? parseFloat(cambio.value) : 0,  // Asegurar que el cambio sea 0 si no es efectivo
         marquesitas: marquesitas.value.map(marquesita => ({
             precio: marquesita.precio,
             ingredientes: marquesita.ingredientes.map(ingrediente => ingrediente.id),
@@ -155,8 +199,9 @@ const enviarPedido = () => {
             nombre: bebida.nombre,
             precio: bebida.precio,
             cantidad: bebida.cantidad
-        }))
+        })),
     };
+    console.log(pedido)
 
     // Enviar el pedido
     router.post('/ordens', pedido, {
@@ -172,6 +217,8 @@ const enviarPedido = () => {
             sumaIndividual.value = 40.0;
             metodoPago.value = 'Efectivo';
             nombreComprador.value = '';
+            pago.value = 0;
+            cambio.value = 0;  // Restablecer el cambio
         },
         onError: (errors) => {
             console.error('Error al enviar el pedido:', errors);
@@ -184,84 +231,81 @@ const enviarPedido = () => {
 
 <template>
     <div class="flex flex-col p-4">
-        
-            <div class="flex justify-between">
-                <h1 class="text-2xl uppercase font-bold text-sky-800/90 mb-4">Crear pedido</h1>
+        <div class="flex justify-between flex-col sm:flex-row">
+            <h1 class="text-2xl uppercase font-bold text-sky-800/90 mb-4">Crear pedido</h1>
+            <input
+                class="border border-gray-300 rounded-lg p-1 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                type="text" v-model="nombreComprador" placeholder="Nombre del comprador">
+        </div>
 
-                <input
-                    class="border border-gray-300 rounded-lg p-1 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    type="text" v-model="nombreComprador" placeholder="Nombre del comprador">
-            </div>
-
-            <div class="border flex md:flex-row p-4 gap-8 divide-x md:divide-gray-550 flex-col">
-                <!-- Sección de Marquesitas y Bebidas -->
-                <div class="flex flex-col flex-1 gap-4">
-                    <!-- Marquesitas -->
-                    <div class="flex flex-col">
-                        <h2 class="font-bold text-lg">Marquesitas</h2>
-                        <h3 class="text-sm">Ingredientes</h3>
-                        <div class="mt-2">
-                            <ul
-                                class="list-disc pl-4 mt-1 h-44 overflow-scroll custom-scrollbar divide-y divide-gray-150">
-                                <li class="flex justify-between items-center py-1" v-for="ingrediente in ingredientes"
-                                    :key="ingrediente.id">
-                                    <div>
-                                        <p class="font-semibold text-gray-600">{{ ingrediente.nombre }}</p>
-                                        <p class="text-sm text-gray-600 pl-3">{{ ingrediente.detalles || ' ' }}</p>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <p class="text-green px-4 text-green-700 font-semibold">${{ ingrediente.precio
-                                            }}
-                                        </p>
-                                        <span @click="handleAddToSelection(ingrediente)"
-                                            class="px-2 py-1 text-xs font-semibold bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer">Añadir</span>
-                                    </div>
-                                </li>
-                            </ul>
+        <div class="border flex md:flex-row p-4 gap-8 divide-x md:divide-gray-550 flex-col">
+            <!-- Sección de Marquesitas y Bebidas -->
+            <div class="flex flex-col flex-1 gap-4">
+                <!-- Marquesitas -->
+                <div class="flex flex-col">
+                    <h2 class="font-bold text-lg">Marquesitas</h2>
+                    <div class="flex justify-between flex-col sm:flex-row sm:items-center">
+                        <h3 class="text-sm w-8/12">Ingredientes</h3>
+                        <div class="border sm:w-7/12 border-gray-500 text-gray-500 rounded-md overflow-hidden flex w-full mr-3">
+                            <input type="text" v-model="searchQueryIngredients" class="py-1 px-3 w-full border-0 focus:outline-none" placeholder="Buscar">
+                            <span @click="clearSearchIngredients" class="py-0 cursor-pointer hover:bg-gray-300 px-3 flex items-center justify-center">x</span>
                         </div>
                     </div>
-                    <div class="flex divide-gray-200 border p-2 flex-col">
-                        <!-- Marquesitas creadas -->
-                        <p class="font-bold">Marquesita a crear</p>
-                        <ul
-                            class="divide-y divide-gray-200 text-base max-h-44 overflow-scroll custom-scrollbar text-gray-600 font-semibold">
-                            <li class="flex w-full justify-between items-center py-1" v-for="(item, index) in selection"
-                                :key="index" :value="item">
+                    <div class="mt-2">
+                        <ul class="list-disc pl-4 mt-1 h-44 overflow-scroll custom-scrollbar divide-y divide-gray-150">
+                            <li class="flex justify-between items-center py-1" v-for="ingrediente in filteredIngredients" :key="ingrediente.id">
                                 <div>
-                                    <p>{{ item.nombre }}</p>
-                                    <p class="text-xs text-gray-600 pl-3">{{ item.detalles || ' ' }}</p>
+                                    <p class="font-semibold text-gray-600">{{ ingrediente.nombre }}</p>
+                                    <p class="text-sm text-gray-600 pl-3">{{ ingrediente.detalles || ' ' }}</p>
                                 </div>
-                                <span @click="handleRemoveSelection(item.id)"
-                                    class="text-sm rounded-lg text-white bg-red-500 py-1 px-2 cursor-pointer">Quitar</span>
+                                <div class="flex items-center">
+                                    <p class="text-green px-4 text-green-700 font-semibold">${{ ingrediente.precio }}</p>
+                                    <span @click="handleAddToSelection(ingrediente)" class="px-2 py-1 text-xs font-semibold bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer">Añadir</span>
+                                </div>
                             </li>
                         </ul>
-                        <div class="flex w-full items-end py-1 justify-between">
+                    </div>
+                </div>
+                <div class="flex divide-gray-200 border p-2 flex-col">
+                    <!-- Marquesitas creadas -->
+                    <p class="font-bold">Marquesita a crear</p>
+                    <ul class="divide-y divide-gray-200 text-base max-h-44 overflow-scroll custom-scrollbar text-gray-600 font-semibold">
+                        <li class="flex w-full justify-between items-center py-1" v-for="(item, index) in selection" :key="index" :value="item">
                             <div>
-                                <p class="text-sm">Precio por marquesita</p>
-                                ${{ sumaIndividual }}
+                                <p>{{ item.nombre }}</p>
+                                <p class="text-xs text-gray-600 pl-3">{{ item.detalles || ' ' }}</p>
                             </div>
-                            <span @click="handleAddToSelectionMarquesa"
-                                class="text-sm px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 cursor-pointer">Crear
-                                marquesita</span>
+                            <span @click="handleRemoveSelection(item.id)" class="text-sm rounded-lg text-white bg-red-500 py-1 px-2 cursor-pointer">Quitar</span>
+                        </li>
+                    </ul>
+                    <div class="flex w-full items-end py-1 justify-between">
+                        <div>
+                            <p class="text-sm">Precio por marquesita</p>
+                            ${{ sumaIndividual }}
+                        </div>
+                        <span @click="handleAddToSelectionMarquesa" class="text-sm px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 cursor-pointer">Crear marquesita</span>
+                    </div>
+                </div>
+                <!-- Bebidas -->
+                <div class="flex flex-col">
+                    <div class="flex flex-col sm:flex-row justify-between w-full">
+                        <h2 class="font-bold text-lg w-8/12">Bebidas</h2>
+                        <div class="border sm:w-7/12 border-gray-500 text-gray-500 rounded-md overflow-hidden flex w-full mr-3">
+                            <input type="text" v-model="searchQueryBebidas" class="py-1 px-3 w-full border-0 focus:outline-none" placeholder="Buscar">
+                            <span @click="clearSearchBebidas" class="py-0 cursor-pointer hover:bg-gray-300 px-3 flex items-center justify-center">x</span>
                         </div>
                     </div>
-                    <!-- Bebidas -->
-                    <div class="flex flex-col">
-                        <h2 class="font-bold text-lg">Bebidas</h2>
-                        <div class="mt-2">
-                            <ul
-                                class="list-disc pl-4 mt-1 h-48 overflow-scroll custom-scrollbar divide-y divide-gray-150">
-                                <li class="flex justify-between items-center py-1" v-for="bebida in bebidas"
-                                    :key="bebida.id">
-                                    <div>
-                                        <p class="font-semibold text-gray-800">{{ bebida.nombre }}</p>
-                                        <p class="text-sm text-gray-600 pl-3">{{ bebida.detalles }}</p>
-                                    </div>
-                                    <div class="flex items-center">
-                                        <p class="text-green px-2 text-green-700 font-semibold">${{ bebida.precio }}</p>
-                                        <span @click="handleAddBebida(bebida)"
-                                            class="px-2 py-1 bg-blue-500 text-xs text-white rounded hover:bg-blue-600 cursor-pointer">Añadir</span>
-                                    </div>
+                    <div class="mt-2">
+                        <ul class="list-disc pl-4 mt-1 h-48 overflow-scroll custom-scrollbar divide-y divide-gray-150">
+                            <li class="flex justify-between items-center py-1" v-for="bebida in filteredBebidas" :key="bebida.id">
+                                <div>
+                                    <p class="font-semibold text-gray-800">{{ bebida.nombre }}</p>
+                                    <p class="text-sm text-gray-600 pl-3">{{ bebida.detalles }}</p>
+                                </div>
+                                <div class="flex items-center">
+                                    <p class="text-green px-2 text-green-700 font-semibold">${{ bebida.precio }}</p>
+                                    <span @click="handleAddBebida(bebida)" class="px-2 py-1 bg-blue-500 text-xs text-white rounded hover:bg-blue-600 cursor-pointer">Añadir</span>
+                                </div>
                                 </li>
                             </ul>
                         </div>
@@ -332,8 +376,8 @@ const enviarPedido = () => {
                         </div>
 
                     </div>
-                    <div class="mt-4 flex justify-between items-center">
-                        <div class="">
+                    <div class="mt-4 flex justify-evenly items-center">
+                        <div class=" flex flex-col w-8/12">
                             <label for="options" class="block text-sm font-bold text-gray-700">Método de pago</label>
                             <select id="options" v-model="metodoPago"
                                 class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
@@ -341,16 +385,30 @@ const enviarPedido = () => {
                                 <option value="Tarjeta">Tarjeta</option>
                                 <option value="Transferencia">Transferencia</option>
                             </select>
+                            <div v-if="metodoPago === 'Efectivo'" class="mt-4">
+                                <label for="pago" class="block text-sm font-bold text-gray-700">Pago</label>
+                                <input id="pago" v-model.number="pago" type="number" step="0.01"
+                                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md" />
+                                <div v-if="pago > sumaTotal" class="mt-4 flex items-center">
+                                    <label for="cambio" class="block text-lg font-bold text-gray-700 mr-4">Cambio: ${{ cambio }}</label>
+                                </div>
+                            </div>
+                            <p class="font-bold text-3xl p-5">Total: ${{ sumaTotal }}</p>
+                            <div v-if="metodoPago !== 'Efectivo'" class="hidden">
+                                {{ pago = 0 }}
+                            
+                            
+                            
+                            </div></div>
+                            
                         </div>
-
-                        <p class="font-bold text-3xl">Total: ${{ sumaTotal }}</p>
-                    </div>
-                    <div v-if="error" class="text-red-500 font-bold">{{ error }}</div>
-                    <button @click.prevent="enviarPedido"
-                            class="justify-end items-end mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                        <div v-if="error" class="text-red-500 font-bold">{{ error }}</div>
+                        
+                        <button @click.prevent="enviarPedido"
+                        class="justify-end items-end mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
                         Crear pedido
                     </button>
-
+                    
                 </div>
             </div>
         
@@ -360,12 +418,7 @@ const enviarPedido = () => {
 
 
 <style>
-.custom-scrollbar {
-    overflow-x: hidden;
-    /* Oculta el scroll horizontal */
-    overflow-y: auto;
-    /* Permite el scroll vertical */
-}
+
 
 .custom-scrollbar::-webkit-scrollbar {
     width: 5px;
