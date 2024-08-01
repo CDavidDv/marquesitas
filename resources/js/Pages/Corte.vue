@@ -21,6 +21,8 @@ const selectedWeek = ref(props.selectedWeek || '');
 const selectedMonth = ref(props.selectedMonth || '');
 const numeroDeMarquesitas = ref(props.numeroDeMarquesitas || 0);
 
+const bebidasCantidad = ref(props.bebidasCantidad || [])
+
 const ordensBySucursal = computed(() => {
     if (sucursal.value > 0) return [];
 
@@ -140,6 +142,10 @@ const resetFilters = () => {
                         <p class="text-lg">Número de órdenes: <span class="font-bold  md:text-2xl px-2 py-1 rounded-lg">{{ numeroDeOrdenes }}</span></p>
                     </div>
                     <p class="text-lg">Número de marquesitas: <span class="font-bold md:text-2xl px-2 py-1 rounded-lg">{{ numeroDeMarquesitas }}</span></p>
+                    <div v-if="bebidasCantidad">
+                        <p v-for="(bebidas, index) in bebidasCantidad" :key="index" class="text-lg">Número de {{ index }}: <span class="font-bold px-2 py-1 rounded-lg">{{ bebidas }}</span></p>
+                    </div>
+                    
                     <span>
                         
                             {{ 
@@ -152,7 +158,6 @@ const resetFilters = () => {
                 </div>
                 <div v-if="$page.props.auth.user.sucursal_id > 0">
                     <p class="text-lg my-3">Total en efectivo: <span class="font-bold text-white md:text-2xl bg-green-500 px-2 py-1 rounded-lg">${{ totalEfectivo }}</span></p>
-                    <p class="text-lg my-3">Total con tarjeta: <span class="font-bold text-white md:text-2xl bg-green-500 px-2 py-1 rounded-lg">${{ totalTarjeta }}</span></p>
                     <p class="text-lg my-3">Total por transferencia: <span class="font-bold text-white md:text-2xl bg-green-500 px-2 py-1 rounded-lg">${{ totalTransferencia }}</span></p>
                     
                     <p class="text-lg my-3">Total bruto: <span class="font-bold text-white md:text-2xl bg-green-500 px-2 py-1 rounded-lg">${{ totalBruto }}</span></p>
@@ -234,14 +239,13 @@ const resetFilters = () => {
                             <div v-for="sucursal in ordensBySucursal" :key="sucursal.id" class="col-span-1 border rounded-2xl p-4">
                                 <h1 class="text-center font-bold text-xl">Sucursal {{ sucursal.id }}</h1>
                                 <p>Total en efectivo: ${{ sucursal.totalEfectivo }}</p>
-                                <p>Total con tarjeta: ${{ sucursal.totalTarjeta }}</p>
                                 <p>Total por transferencia: ${{ sucursal.totalTransferencia }}</p>
                                 
                                 <p>Total bruto: ${{ sucursal.totalBruto }}</p>
                                 <p>Número de órdenes: {{ sucursal.numeroDeOrdenes }}</p>
                                 <div class="mt-4">
                                     <div v-for="(orden, index) in sucursal.ordens" :key="orden.id" class="mb-2">
-                                        <p class=" font-bold">>>ID{{ sucursal.id }}-{{ index+1 }} - {{ orden.nombre_comprador }} - Total: ${{ orden.total + '<<' }}</p>
+                                        <p class=" font-bold">>>{{ index+1 }} - {{ orden.nombre_comprador }} - Total: ${{ orden.total + '<<' }}</p>
                                         <div v-if="orden.marquesitas && orden.marquesitas.length">
                                             <p class="font-bold mt-2">Marquesitas:</p>
                                             <ul class="list-disc pl-5">

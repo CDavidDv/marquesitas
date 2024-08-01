@@ -9,13 +9,16 @@ const props = defineProps({
         type: Object,
         required: true
     },
-
     ingredientes: {
         type: Object,
         required: true
     },
     ordens: {
         type: Object,
+        required: true
+    },
+    categorias: {
+        type: Object ,
         required: true
     },
 })
@@ -40,7 +43,15 @@ const editarPedido = (id, estado) => {
   });
 };
 
-
+const findCategoriaNombre = (itemId) => {
+    for (let categoria of props.categorias) {
+        const item = categoria.items.find(item => item.id === itemId);
+        if (item) {
+            return categoria.nombre;
+        }
+    }
+    return 'Categoría no encontrada';
+}
 </script>
 
 <template>
@@ -49,6 +60,7 @@ const editarPedido = (id, estado) => {
             <div v-if="ordens.length > 0" class="bg-white shadow-lg text-gray-500 leading-relaxed border p-8 rounded-3xl">                <!-- Primer pedido -->
                 <div class="flex flex-col">
                     <div class="flex w-full justify-between items-center mb-2">
+                        
                         <p class="text-xl font-bold text-gray-700">Pedido de {{ ordens[0].nombre_comprador }}</p>
                         <p class="text-xl font-semibold text-gray-900">Estado: {{ ordens[0].estado }}</p>
                     </div>
@@ -56,6 +68,7 @@ const editarPedido = (id, estado) => {
 
                     
                         <!-- Marquesitas -->
+                         
                         <div class="col-span-6">
                             <div v-if="ordens[0].marquesitas.length > 0" class="mb-4">
                                 <h4 class="text-md font-medium">Marquesitas</h4>
@@ -117,12 +130,23 @@ const editarPedido = (id, estado) => {
                             </div>
                             
                         </div>
-                        
+                        <div v-if="ordens[0].orden_items.length" class="col-span-12">
+                            <div v-for="item in ordens[0].orden_items" :key="item.id" class="ml-4">
+                                <p class="text-md font-medium text-gray-700">
+                                    {{ findCategoriaNombre(item.item_id) }}: {{ item.nombre }} - Cantidad: {{ item.cantidad }} - Precio: {{ item.precio_unitario }}
+                                </p>
+                            </div>
+                        </div>
                     </div>
                     <div class="text-right col-span-2 ">
                             <p class="text-2xl font-semibold text-gray-950">Total: ${{ ordens[0].total }}</p>
-                            <p>Recibido: ${{ ordens[0].pago }}</p>
-                            <p>Cambio: ${{ ordens[0].cambio }}</p>
+                            <div v-if="ordens[0].metodo !== 'Efectivo'">
+                                <p class=" text-gray-600">Pago con {{ ordens[0].metodo }}</p>
+                            </div>
+                            <div v-else>
+                                <p class=" text-gray-600">Recibido: ${{ ordens[0].pago }}</p>
+                                <p class=" text-gray-600">Cambio: ${{ ordens[0].cambio }}</p>
+                            </div>
                             <div class="flex gap-3 justify-end  ">
                                 <span @click="editarPedido(ordens[0].id, 'Cancelado')" class="cursor-pointer px-2 py-1 rounded-xl text-white bg-red-500 hover:bg-red-600">Cancelar</span>
                                 <span @click="editarPedido(ordens[0].id, 'Entregado')" class="cursor-pointer px-2 py-1 rounded-xl text-white bg-green-500 hover:bg-green-600">Entregar</span>
@@ -149,6 +173,14 @@ const editarPedido = (id, estado) => {
                                 </div>
                                 <div>
                                     <!-- Marquesitas -->
+                                    
+                                    <div v-if="orden.orden_items">
+                                        <div v-for="item in orden.orden_items" :key="item.id" class="ml-4">
+                                            <p class="text-md font-medium text-gray-700">
+                                                {{ findCategoriaNombre(item.item_id) }}: {{ item.nombre }} - Cantidad: {{ item.cantidad }} - Precio: {{ item.precio_unitario }}
+                                            </p>
+                                        </div>
+                                    </div>
                                 <div v-if="orden.marquesitas.length > 0" class="mb-4">
                                     <h4 class="text-md font-medium">Marquesitas</h4>
                                     <ul class="w-full mt-2">
@@ -210,8 +242,14 @@ const editarPedido = (id, estado) => {
                                 <div class="text-right flex flex-col justify-end items-end">
                                     <p class=" font-semibold text-gray-800">Estado: {{ orden.estado }}</p>
                                     <p class="text-2xl  font-semibold">Total: ${{ orden.total }}</p>
-                                    <p class=" text-gray-600">Recibido: ${{ ordens[0].pago }}</p>
-                                    <p class=" text-gray-600">Cambio: ${{ ordens[0].cambio }}</p>
+                                    <div v-if="orden.metodo !== 'Efectivo'">
+                                        <p class=" text-gray-600">Pago con {{ orden.metodo }}</p>
+                                    </div>
+                                    <div v-else>
+                                        <p class=" text-gray-600">Recibido: ${{ orden.pago }}</p>
+                                        <p class=" text-gray-600">Cambio: ${{ orden.cambio }}</p>
+                                    </div>
+                                    
                                     <div class="gap-3 flex">
                                         <span @click="editarPedido(orden.id, 'Cancelado')" class="cursor-pointer px-2 py-1 rounded-xl text-white bg-red-500 hover:bg-red-600">Cancelar</span>
                                         <span @click="editarPedido(orden.id, 'Entregado')" class="cursor-pointer px-2 py-1 rounded-xl text-white bg-green-500 hover:bg-green-600">Entregar</span>
@@ -231,7 +269,7 @@ const editarPedido = (id, estado) => {
             </div>
             
             <div class=" border p-3 bg-white md:w-8/12 lg:w-8/12 col-span-7 rounded-3xl shadow-xl">
-                <CrearPedido :bebidas="bebidas" :ingredientes="ingredientes"  />
+                <CrearPedido :bebidas="bebidas" :ingredientes="ingredientes" :categorias="categorias" />
             </div>
         </div>
     </div>

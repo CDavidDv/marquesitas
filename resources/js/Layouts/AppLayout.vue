@@ -54,9 +54,16 @@ const logout = () => {
                                 <NavLink :href="route('corte')" :active="route().current('corte')">
                                     Corte de caja
                                 </NavLink>
-                                <NavLink :href="route('inventario')" :active="route().current('inventario')">
+                                <NavLink :href="route('inventario')" :active="route().current('inventario')" v-if="$page.props.auth.user.sucursal_id === 0">
                                     Inventario
                                 </NavLink>
+                                <NavLink :href="route('ingrediBebidas')" :active="route().current('ingrediBebidas')">
+                                    Ingredientes
+                                </NavLink>
+                                <NavLink :href="route('sucursales')" :active="route().current('sucursales')" v-if="$page.props.auth.user.sucursal_id === 0">
+                                    Sucursales
+                                </NavLink>
+                                
                             </div>
                         </div>
 
@@ -203,8 +210,11 @@ const logout = () => {
                         <ResponsiveNavLink :href="route('corte')" :active="route().current('corte')">
                             Corte de caja
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('inventario')" :active="route().current('inventario')">
+                        <ResponsiveNavLink :href="route('inventario')" :active="route().current('inventario')" v-if="$page.props.auth.user.sucursal_id === 0">
                             Inventario
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('sucursales')" :active="route().current('sucursales')" v-if="$page.props.auth.user.sucursal_id === 0">
+                            Sucursales
                         </ResponsiveNavLink>
                     </div>
 

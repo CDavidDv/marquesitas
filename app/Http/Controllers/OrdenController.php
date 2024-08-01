@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
 use App\Models\BebidasInventario;
 use App\Models\Ingrediente;
+use App\Models\Orden_item;
 use Carbon\Carbon;
 
 class OrdenController extends Controller
@@ -129,23 +130,35 @@ class OrdenController extends Controller
 
         $pedidoData = $request->validate([
             'nombre_comprador' => 'required|string',
-            'pago' => 'required|numeric',  
-            'cambio' => 'required|numeric',  
+            'pago' => 'required|numeric',
+            'cambio' => 'required|numeric',
             'estado' => 'required|string',
             'metodo' => 'required|string',
             'total' => 'required|numeric',
-            'marquesitas' => 'array',
-            'bebidas' => 'array',
+            'marquesitas' => 'nullable|array',
+            'bebidas' => 'nullable|array',
+            'categorias' => 'nullable|array',
         ]);
 
-        if (empty($pedidoData['marquesitas']) && empty($pedidoData['bebidas'])) {
-            return redirect()->back()->withErrors(['pedido' => 'Debe agregar al menos una marquesita o bebida al pedido.']);
+        // Asegúrate de que al menos uno de los arrays no esté vacío
+        if (empty($pedidoData['marquesitas']) && empty($pedidoData['bebidas']) && empty($pedidoData['categorias'])) {
+            return redirect()->back()->withErrors(['pedido' => 'Debe agregar al menos una marquesita, bebida o categoría al pedido.']);
         }
 
+        // Añadir sucursal_id a los datos del pedido
         $pedidoData['sucursal_id'] = $sucursalId;
         
-        $orden = orden::create($pedidoData);
-        
+        // Crear la orden
+        $pedido = Orden::create([
+            'nombre_comprador' => $pedidoData['nombre_comprador'],
+            'pago' => $pedidoData['pago'],
+            'cambio' => $pedidoData['cambio'],
+            'estado' => $pedidoData['estado'],
+            'metodo' => $pedidoData['metodo'],
+            'total' => $pedidoData['total'],
+            'sucursal_id' => $sucursalId,
+        ]);
+
         if (!empty($pedidoData['marquesitas'])) {
             foreach ($pedidoData['marquesitas'] as $marquesitaData) {
                 $marquesita = new Marquesita([
@@ -153,7 +166,7 @@ class OrdenController extends Controller
                     'cantidad' => $marquesitaData['cantidad']
                 ]);
 
-                $orden->marquesitas()->save($marquesita);
+                $pedido->marquesitas()->save($marquesita);
 
                 if (isset($marquesitaData['ingredientes'])) {
                     foreach ($marquesitaData['ingredientes'] as $ingredienteId) {
@@ -171,14 +184,28 @@ class OrdenController extends Controller
                     'cantidad' => $bebidaData['cantidad']
                 ]);
 
-                $orden->bebidas()->save($bebida);
+                $pedido->bebidas()->save($bebida);
+            }
+        }
+        
+        // Guardar orden_items para categorías e items
+        if (!empty($pedidoData['categorias'])) {
+            foreach ($pedidoData['categorias'] as $categoria) {
+                foreach ($categoria['items'] as $item) {
+                    Orden_item::create([
+                        'orden_id' => $pedido->id,
+                        'item_id' => $item['id'],
+                        'cantidad' => $item['cantidad'],
+                        'precio_unitario' => $item['precio'],
+                        'total' => $item['cantidad'] * $item['precio'],
+                    ]);
+                }
             }
         }
 
         return redirect()->back()->with('success', [
             'message' => 'Pedido guardado con éxito',
             'clearForm' => true,
-            
         ]);
     }
 

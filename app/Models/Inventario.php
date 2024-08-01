@@ -11,7 +11,10 @@ class Inventario extends Model
 
     
     protected $fillable = ['sucursal_id', 'ingrediente_id', 'bebida_id', 'cantidad'];
-    
+    public function sucursal()
+    {
+        return $this->belongsTo(Sucursal::class);
+    }
     // Define la relación con el modelo Bebida
     public function bebida()
     {

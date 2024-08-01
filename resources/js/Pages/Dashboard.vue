@@ -19,6 +19,10 @@ defineProps({
     type: Object,
     required: true
   },
+  categorias: {
+    type: Object ,
+    required: true
+  },
   tableroAdmin: {
     type: Object,
     required: true,
@@ -37,6 +41,7 @@ defineProps({
     })
   }
 });
+
 </script>
 
 <template>
@@ -44,7 +49,7 @@ defineProps({
         <div class="py-1 sm:py-4">
             <div class="max-w mx-auto sm:px-6 lg:px-8">
                 <div class=" overflow-hidden  sm:rounded-lg">
-                    <Welcome v-if="$page.props.auth.user.sucursal_id > 0 " :bebidas="bebidas" :ingredientes="ingredientes" :ordens="ordens" />
+                    <Welcome v-if="$page.props.auth.user.sucursal_id > 0 " :bebidas="bebidas" :ingredientes="ingredientes" :ordens="ordens" :categorias="categorias" />
                     <Tablero v-else :tableroAdmin="tableroAdmin" />
                 </div>
             </div>

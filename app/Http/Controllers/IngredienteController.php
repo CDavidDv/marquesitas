@@ -2,9 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Bebida;
 use App\Models\BebidasInventario;
+use App\Models\Categoria;
 use App\Models\Ingrediente;
+use App\Models\Inventario;
+use App\Models\InventariosOtro;
+use App\Models\Item;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class IngredienteController extends Controller
 {
@@ -139,14 +145,16 @@ class IngredienteController extends Controller
     {
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
+            'precio' => 'required|numeric|min:0',
         ]);
 
         $bebida = BebidasInventario::create([
             'nombre' => $validated['nombre'],
+            'precio' => $validated['precio'],
             'cantidad' => 0, // Asume cantidad inicial de 0
         ]);
 
-        return redirect()->back()->with('success', 'Bebida agregado con éxito');
+        return redirect()->back()->with('success', 'Bebida agregado con éxito', $bebida);
     }
 
     
@@ -157,5 +165,72 @@ class IngredienteController extends Controller
         $bebida->delete();
 
         return redirect()->back()->with('success', 'Bebida eliminado con éxito');
+    }
+
+    public function ingrediBebidas(Request $request)
+    {
+        $user = auth()->user();
+        $sucursalId = $user->sucursal_id;
+
+        $ingredientes = Ingrediente::all();
+        $bebidas = BebidasInventario::all();
+        $categorias = Categoria::with('items')->get();
+        $items = Item::all();
+        $itemsporcat = $items->groupBy('categoria_id');
+
+        $inventariosOtros = InventariosOtro::where('sucursal_id', $sucursalId)->get();
+        $inventario = Inventario::where('sucursal_id', $sucursalId)->get();
+
+        // Mapear los datos de inventario para cada ingrediente
+        $ingredientesInventario = $ingredientes->map(function($ingrediente) use ($inventario) {
+            $inventarioIngrediente = $inventario->where('ingrediente_id', $ingrediente->id)->first();
+            $cantidad = $inventarioIngrediente->cantidad ?? 0;
+            $precioInventario = $inventarioIngrediente->precio ?? 0;
+            return [
+                'id' => $ingrediente->id,
+                'nombre' => $ingrediente->nombre,
+                'cantidad' => $cantidad,
+                'precio' => $precioInventario,
+                'precio_original' => $ingrediente->precio // Precio original del ingrediente
+            ];
+        });
+
+        // Mapear los datos de inventario para cada bebida
+        $bebidasInventario = $bebidas->map(function($bebida) use ($inventario) {
+            $inventarioBebida = $inventario->where('bebida_id', $bebida->id)->first();
+            $cantidad = $inventarioBebida->cantidad ?? 0;
+            $precioInventario = $inventarioBebida->precio ?? 0;
+            return [
+                'id' => $bebida->id,
+                'nombre' => $bebida->nombre,
+                'cantidad' => $cantidad,
+                'precio' => $precioInventario,
+                'precio_original' => $bebida->precio // Precio original de la bebida
+            ];
+        });
+
+
+        // Mapear los datos de inventario para cada item en inventariosOtros
+        $otrosInventario = $items->map(function($item) use ($inventariosOtros) {
+            $inventarioItem = $inventariosOtros->where('item_id', $item->id)->first();
+            $cantidad = $inventarioItem->cantidad ?? 0;
+            return [
+                'id' => $item->id,
+                'nombre' => $item->nombre,
+                'categoria_id' => $item->categoria_id,
+                'cantidad' => $cantidad,
+            ];
+        });
+
+        return Inertia::render('IngrediBebidas', [
+            'ingredientesInventario' => $ingredientesInventario,
+            'bebidasInventario' => $bebidasInventario,
+            'otrosInventario' => $otrosInventario,
+            'sucursal' => $sucursalId,
+            'ingredientes' => $ingredientes,
+            'bebidas' => $bebidas,
+            'categorias' => $categorias,
+            'itemsporcat' => $itemsporcat
+        ]);
     }
 }

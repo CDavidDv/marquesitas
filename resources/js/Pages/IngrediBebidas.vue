@@ -382,97 +382,145 @@ const handleAddNewCategory = () => {
 };
 
 
+
+
 </script>
 
 <template>
   <AppLayout title="Inventario">
+    <template #header>
+      <div class="flex justify-between flex-col md:flex-row">
+        <div>
+          <h1 class="text-xl font-bold">Inventario - Sucursal {{ sucursal }}</h1>
+        </div>
+      </div>
+    </template>
 
     <div class="py-4">
       <div class="max-w mx-auto sm:px-6 lg:px-8">
         <div class="overflow-hidden sm:rounded-lg">
           <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
             <form @submit.prevent="submit">
-             
-              <!--CATEGORIAS-->
-              <div v-if="categorias">
-                <div v-for="categoria in form.categorias" :key="categoria.id" class="mb-4">
-                  <h2 class="text-xl font-bold">{{ categoria.nombre }}</h2>
-                  <div v-if="categoria.items" class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                    <div v-for="item in categoria.items" :key="item.id"
-                      class="bg-white shadow rounded border border-gray-300 p-4">
+              <div class="mb-4">
+                <div class="flex flex-col md:flex-row gap-2">
+                  <h2 class="text-xl font-bold mb-4">Ingredientes</h2>
+                  <div v-if="error" class="text-red-500 font-bold mt-2">{{ error }}</div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                  <div v-for="ingrediente in form.ingredientes" :key="ingrediente.id"
+                    class="bg-white border border-gray-300 shadow rounded-md p-4  ">
+                    <label class="block overflow-hidden">
+                      <div class="flex justify-between items-center lg:flex-row flex-col">
 
-                      <label class="block overflow-hidden">
-                        <div class="flex justify-between items-center lg:flex-row flex-col">
-                          <span  class="font-medium">Cantidad de {{
-            item.cantidad
-          }}:</span>
-                          <span  class="font-medium">Nombre:</span>
-                        </div>
+                        <span v-if="$page.props.auth.user.sucursal_id > 0"
+                          class=" font-light text-sm lg:text-base">Cantidad
+                          de {{ ingrediente.nombre }}:</span>
+                        <span v-else class=" font-light text-sm lg:text-base">Nombre: </span>
+                      </div>
 
-                        
-                        <div>
-                          <input type="text" v-model.trim="item.nombre"
-                          class="mt-1 block w-full border rounded p-2 border-gray-300" />
-                          <div class="flex items-center">
-                            <p class="px-2">$</p>
-                            <input type="number" v-model.number="item.precio" :min="0"
-                            class="mt-1 block w-full border rounded p-2 border-gray-300" />
-                            <input  type="number" v-model.number="item.cantidad"
-                            class="mt-1 block w-full border rounded p-2" :min="0" step="0.10" />
-                          </div>
+                      <input v-if="$page.props.auth.user.sucursal_id > 0" type="number"
+                        v-model.number="form.ingredientes.find(i => i.id === ingrediente.id).cantidad"
+                        class="mt-1 block w-full border rounded p-2" step="0.10" />
+                      <div v-else class="">
+                        <input type="text" v-model.trim="ingrediente.nombre"
+                          class="mt-1 block w-full border border-gray-300 rounded p-2" />
+                        <p>Precio: </p>
+                        <div class="flex items-center">
+                          <p class="px-2">$</p>
+                          <input type="number"
+                            v-model.number="form.ingredientes.find(i => i.id === ingrediente.id).precio"
+                            class="mt-1 block w-full border border-gray-300 rounded p-2 text-right" :min="0"
+                            step="0.10" />
                         </div>
-                        <div v-if="$page.props.auth.user.sucursal_id == 0"
-                          class="flex flex-col gap-1 mt-2 justify-center items-center">
-                          <span @click="editarItem(categoria.id, item.id)"
-                            class="text-center w-fit text-xs px-10 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg cursor-pointer">Actualizar</span>
-                          <span @click="eliminarItem(categoria.id, item.id)"
-                            class="text-center w-fit text-xs px-11 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg cursor-pointer">Eliminar</span>
+                      </div>
+                      <div v-if="$page.props.auth.user.sucursal_id == 0"
+                        class="flex flex-col gap-1 pt-2 justify-center items-center">
+                        <span @click="editarIngrediente(ingrediente.id)"
+                          class=" text-center text-xs px-10 py-2 w-fit bg-blue-500 hover:bg-blue-600 text-white  font-bold rounded-lg cursor-pointer">Actualizar</span>
+                        <span @click="eliminarIngrediente(ingrediente.id)"
+                          class="text-center text-xs px-11 py-2 w-fit bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg cursor-pointer">Eliminar</span>
+                      </div>
+                    </label>
+                  </div>
+                  <div v-if="$page.props.auth.user.sucursal_id == 0"
+                    class="bg-white shadow rounded border border-gray-300 p-4 items-center flex ">
+                    <label class="block w-full">
+                      <span class="font-medium text-gray-500">Nuevo item</span>
+                      <input id="nombre" type="text" placeholder="Ingrediente"
+                        class="mt-1 block w-full border border-gray-300 rounded p-2" />
+                      <input id="precio" type="number" placeholder="$0.0"
+                        class="mt-1 block w-full border border-gray-300 rounded p-2" min="0" step="0.10" />
+                      <div class="flex justify-center w-full items-center">
+                        <div class="flex flex-col gap-1 mt-2">
+                          <span @click="agregarIngrediente"
+                            class="text-center text-xs px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg cursor-pointer">Agregar</span>
+                          <div v-if="errorNuevoIngrediente" class="text-red-500  mt-2">{{ errorNuevoIngrediente }}</div>
                         </div>
-                        <div v-if="errorNuevoItem[categoria.id]" class="text-red-500 mt-2">{{
-            errorNuevoItem[categoria.id]
-          }}</div>
-                      </label>
-                    </div>
-                    <div v-if="$page.props.auth.user.sucursal_id == 0"
-                      class="bg-white shadow border border-gray-300 rounded p-4 items-center flex">
-                      <label class="block h-full">
-                        <div class="flex justify-between w-full items-center">
-                          <span class="font-medium text-gray-500">Nuevo item</span>
-
-                        </div>
-                        <input type="text" placeholder="Nombre del item"
-                          class="mt-1 block w-full border border-gray-300 rounded p-2"
-                          v-model.trim="nuevoItem[categoria.id].nombre" />
-                        <input type="number" placeholder="$0.0"
-                          class="mt-1 block w-full border border-gray-300 rounded p-2"
-                          v-model.number="nuevoItem[categoria.id].precio" step="0.10" />
-                        <input type="number" placeholder="0.0"
-                        class="mt-1 block w-full border border-gray-300 rounded p-2"
-                        v-model.number="nuevoItem[categoria.id].cantidad" step="0.10" />
-                        <div class="flex justify-center items-center w-full mt-2">
-                          <span @click="agregarItem(categoria.id)"
-                            class="text-center text-xs px-10 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg cursor-pointer">Agregar</span>
-                        </div>
-                        <div v-if="errorNuevoItemCat[categoria.id]" class="text-red-500 mt-2">{{
-            errorNuevoItemCat[categoria.id] }}</div>
-                      </label>
-                    </div>
+                      </div>
+                    </label>
                   </div>
                 </div>
               </div>
 
+              <div class="mb-4">
+                <h2 class="text-xl font-bold">Bebidas</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                  <div v-for="bebida in form.bebidas" :key="bebida.id"
+                    class="bg-white shadow rounded border border-gray-300 p-4">
+                    <label class="block overflow-hidden">
+                      <div class="flex justify-between items-center lg:flex-row flex-col">
+                        <span v-if="$page.props.auth.user.sucursal_id > 0" class="font-medium">Cantidad de {{
+            bebida.nombre
+          }}:</span>
+                        <span v-else class="font-medium">Nombre:</span>
 
-              <div v-if="$page.props.auth.user.sucursal_id === 0"
-                class="py-4 my-8 border-t-2 flex flex-col w-fit gap-2">
-                <label for="categoria">Nueva categoria:</label>
-                <input v-model.trim="nuevaCategoria" type="text" class="rounded-lg" placeholder="Nombre">
-                <span @click.prevent="handleAddNewCategory"
-                  class="bg-blue-500 hover:bg-blue-600 cursor-pointer text-white px-4 py-2 rounded-xl text-center">
-                  Agregar
-                </span>
-                <div v-if="errorNuevoCategoria" class="text-red-500  text-center">{{ errorNuevoCategoria }}</div>
+                      </div>
+
+                      <input v-if="$page.props.auth.user.sucursal_id > 0" type="number"
+                        v-model.number="form.bebidas.find(b => b.id === bebida.id).cantidad"
+                        class="mt-1 block w-full border rounded p-2" :min="0" step="0.10" />
+
+                      <div v-else>
+                        <input type="text" v-model.trim="bebida.nombre"
+                          class="mt-1 block w-full border rounded p-2 border-gray-300" />
+                        <div class="flex items-center">
+                          <p class="px-2">$</p>
+                          <input type="number" v-model.number="bebida.precio" :min="0"
+                            class="mt-1 block w-full border rounded p-2 border-gray-300" />
+                        </div>
+                      </div>
+                      <div v-if="$page.props.auth.user.sucursal_id == 0"
+                        class="flex flex-col gap-1 mt-2 justify-center items-center ">
+                        <span @click="editarBebida(bebida.id)"
+                          class=" text-center w-fit text-xs px-10 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg cursor-pointer">Actualizar</span>
+                        <span @click="eliminarBebida(bebida.id)"
+                          class="text-center w-fit text-xs px-11 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg cursor-pointer">Eliminar</span>
+                      </div>
+                    </label>
+
+                  </div>
+                  <div v-if="$page.props.auth.user.sucursal_id == 0"
+                    class="bg-white shadow border border-gray-300 rounded p-4 items-center flex ">
+                    <label class="block h-full ">
+                      <div class="flex justify-between w-full items-center">
+                        <span class="font-medium text-gray-500">Nuevo item</span>
+                      </div>
+                      <input id="nombreB" type="text" placeholder="Bebida"
+                        class="mt-1 block w-full border border-gray-300 rounded p-2" :min="0"
+                        v-model.trim="form.bebidas.nombre" />
+                      <input id="precioB" type="number" placeholder="$0.0"
+                        class="mt-1 block w-full border border-gray-300 rounded p-2" :min="0"
+                        v-model.number="form.bebidas.precio" step="0.10" />
+                      <div class="flex justify-center items-center w-full mt-2">
+                        <span @click="agregarBebida"
+                          class=" text-center text-xs px-10 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg cursor-pointer">Agregar</span>
+                      </div>
+                      <div v-if="errorNuevoBebida" class="text-red-500  mt-2">{{ errorNuevoBebida }}</div>
+                    </label>
+                  </div>
+                </div>
               </div>
-
+              <!--CATEGORIAS-->
               <div v-if="$page.props.auth.user.sucursal_id > 0" class="w-full flex justify-end">
                 <button type="submit" class="py-2 px-3 rounded-lg bg-orange-500 text-white font-bold">Actualizar
                   Inventario</button>

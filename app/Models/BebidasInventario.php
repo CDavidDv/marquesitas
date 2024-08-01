@@ -10,4 +10,8 @@ class BebidasInventario extends Model
     use HasFactory;
 
     protected $fillable = ['orden_id', 'nombre', 'precio', 'cantidad'];
+    public function inventarios()
+    {
+        return $this->hasMany(Inventario::class, 'bebida_id');
+    }
 }

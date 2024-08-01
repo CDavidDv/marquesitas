@@ -27,14 +27,15 @@ class User extends Authenticatable
      */
 
      public function sucursal()
-     {
-         return $this->belongsTo(Sucursal::class);
-     }
+    {
+        return $this->belongsTo(Sucursal::class);
+    }
 
     protected $fillable = [
         'name',
         'email',
         'password',
+        'sucursal_id'
     ];
 
     /**
