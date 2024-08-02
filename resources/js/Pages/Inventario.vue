@@ -183,12 +183,12 @@ const editarIngrediente = (id) => {
 const editarBebida = (id) => {
   const bebida = form.bebidas.find(b => b.id === id);
   if (bebida) {
-    if (!bebida.nombre || bebida.nombre.trim() === '') {
+    if (!bebida.nombre || bebida.nombre.trim() == '') {
       console.log(bebida.nombre)
       error.value = 'El nombre está vacío o solo contiene espacios';
       return;
     }
-    if (!bebida.precio || isNaN(bebida.precio) || Number(bebida.precio.value) === 0) {
+    if (!bebida.precio || isNaN(bebida.precio) || Number(bebida.precio.value) == 0) {
       error.value = 'El precio está vacío, no es válido o es 0';
       return;
     }
@@ -303,16 +303,16 @@ const eliminarItem = (categoriaId, itemId) => {
 
 const editarItem = (categoriaId, itemId) => {
   // Encuentra la categoría y el ítem
-  const categoria = form.categorias.find(c => c.id === categoriaId);
-  const item = categoria ? categoria.items.find(i => i.id === itemId) : null;
+  const categoria = form.categorias.find(c => c.id == categoriaId);
+  const item = categoria ? categoria.items.find(i => i.id == itemId) : null;
 
   if (item) {
     // Validaciones
-    if (!item.nombre || item.nombre.trim() === '') {
+    if (!item.nombre || item.nombre.trim() == '') {
       errorNuevoItem.value[itemId] = 'El nombre está vacío o solo contiene espacios';
       return;
     }
-    if (!item.precio || isNaN(item.precio) || Number(item.precio) === 0) {
+    if (!item.precio || isNaN(item.precio) || Number(item.precio) == 0) {
       errorNuevoItem.value[itemId] = 'El precio está vacío, no es válido o es 0';
       return;
     }
@@ -323,10 +323,10 @@ const editarItem = (categoriaId, itemId) => {
         console.log('Item actualizado con éxito');
 
         // Obtener la última categoría con los ítems actualizados
-        const updatedCategory = response.props.categorias.find(c => c.id === categoriaId);
+        const updatedCategory = response.props.categorias.find(c => c.id == categoriaId);
         if (updatedCategory) {
           form.categorias = form.categorias.map(c => 
-            c.id === categoriaId ? updatedCategory : c
+            c.id == categoriaId ? updatedCategory : c
           );
         }
 

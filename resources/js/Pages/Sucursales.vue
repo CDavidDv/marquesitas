@@ -48,10 +48,10 @@ const updateSucursal = (index) => {
 
 const addSucursal = () => {
     if (
-        newSucursal.value.direccion.trim() === '' ||
-        newSucursal.value.email.trim() === '' ||
-        newSucursal.value.nombre.trim() === '' ||
-        newSucursal.value.password.trim() === ''
+        newSucursal.value.direccion.trim() == '' ||
+        newSucursal.value.email.trim() == '' ||
+        newSucursal.value.nombre.trim() == '' ||
+        newSucursal.value.password.trim() == ''
     ) {
         error.value = 'Debe llenar todos los campos.';
         return;
@@ -130,7 +130,7 @@ const deleteSucursal = (index) => {
         <div class="py-4">
             <div class="max-w mx-auto sm:px-2 lg:px-4">
                 <div class="overflow-hidden sm:rounded-lg">
-                    <div v-if="$page.props.auth.user.sucursal_id === 0">
+                    <div v-if="$page.props.auth.user.sucursal_id == 0">
                         <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
                             <h2 class="text-2xl text-gray-500 font-bold mb-5">Sucursales</h2>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
